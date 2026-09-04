@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gallo POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bevan&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14110F;
+    --bg-elevated: #1C1815;
+    --card: #241F1B;
+    --card-hover: #2C2620;
+    --line: #38312A;
+    --gold: #C9A15A;
+    --gold-bright: #E0B96B;
+    --text: #F3ECE1;
+    --text-dim: #9C8F80;
+    --text-faint: #6B6157;
+    --red: #A63A2E;
+    --red-bright: #C24C3D;
+    --green: #6B9B6E;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14110F; --bg-elevated: #1C1815; --card: #241F1B; --card-hover: #2C2620;
+      --line: #38312A; --gold: #C9A15A; --gold-bright: #E0B96B; --text: #F3ECE1;
+      --text-dim: #9C8F80; --text-faint: #6B6157; --red: #A63A2E; --red-bright: #C24C3D; --green: #6B9B6E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14110F; --bg-elevated: #1C1815; --card: #241F1B; --card-hover: #2C2620;
+    --line: #38312A; --gold: #C9A15A; --gold-bright: #E0B96B; --text: #F3ECE1;
+    --text-dim: #9C8F80; --text-faint: #6B6157; --red: #A63A2E; --red-bright: #C24C3D; --green: #6B9B6E;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    position: relative;
+  }
+  .brand {
+    font-family: 'Bevan', serif;
+    letter-spacing: 0.5px;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .topbar h1 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--gold-bright);
+    font-family: 'Bevan', serif;
+    font-weight: 400;
+  }
+  .topbar .sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .icon-btn:active { background: var(--card-hover); }
+
+  .content { flex: 1; padding: 18px; padding-bottom: 100px; overflow-y: auto; }
+
+  /* LOGIN SCREEN */
+  .login-hero { text-align: center; padding: 40px 20px 10px; }
+  .rooster { font-size: 56px; line-height: 1; margin-bottom: 6px; }
+  .login-hero .brand { font-size: 40px; color: var(--gold-bright); }
+  .login-hero .tag { color: var(--text-dim); font-size: 13px; margin-top: 4px; letter-spacing: 0.3px; }
+
+  .name-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .name-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .name-btn:active { background: var(--card-hover); }
+  .name-btn.taken {
+    color: var(--text-faint);
+    background: transparent;
+    border-style: dashed;
+    cursor: not-allowed;
+  }
+  .name-btn.taken .who { display: block; font-size: 11px; font-weight: 400; margin-top: 4px; color: var(--text-faint); }
+
+  .admin-link {
+    display: block;
+    text-align: center;
+    margin-top: 36px;
+    color: var(--text-faint);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .manage-names {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .manage-names button {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* HOME (mesero) */
+  .section-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    margin: 22px 0 10px;
+    font-weight: 700;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .tab-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tab-card:active { background: var(--card-hover); }
+  .tab-card .tname { font-weight: 700; font-size: 16px; }
+  .tab-card .tmeta { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+  .tab-card .tcount {
+    background: var(--gold);
+    color: #211a10;
+    font-weight: 800;
+    font-size: 13px;
+    border-radius: 20px;
+    padding: 4px 10px;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .empty-note {
+    color: var(--text-faint);
+    font-size: 14px;
+    text-align: center;
+    padding: 30px 10px;
+  }
+
+  .new-tab-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #211a10;
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .new-tab-btn:active { background: var(--gold-bright); }
+
+  /* MENU / ORDER SCREEN */
+  .order-strip {
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 18px;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .order-strip b { color: var(--gold-bright); }
+
+  .category {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .category-head {
+    padding: 15px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .category-head .chev { color: var(--text-faint); transition: transform .15s; font-size: 13px; }
+  .category-head.open .chev { transform: rotate(180deg); }
+  .category-body { display: none; border-top: 1px solid var(--line); }
+  .category-body.open { display: block; }
+
+  .product-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .product-row:last-child { border-bottom: none; }
+  .product-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .product-name { font-size: 15px; font-weight: 500; }
+  .qty-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-elevated);
+    border-radius: 20px;
+    border: 1px solid var(--line);
+  }
+  .qty-stepper button {
+    width: 32px; height: 32px;
+    border: none;
+    background: none;
+    color: var(--gold-bright);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .qty-stepper .qn { min-width: 22px; text-align: center; font-weight: 700; font-size: 14px; }
+
+  .format-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .format-chip {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    background: var(--bg-elevated);
+  }
+  .format-chip .fq { display: block; font-size: 15px; margin-top: 2px; color: var(--text); }
+  .format-chip.has-qty { border-color: var(--gold); background: rgba(201,161,90,0.12); color: var(--gold-bright); cursor: default; padding: 6px 2px; }
+  .format-chip .fq-label { font-size: 11px; margin-bottom: 3px; }
+  .format-chip .fq-stepper { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .format-chip .fq-stepper button {
+    width: 24px; height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    color: var(--gold-bright);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .format-chip .fq-stepper button:active { background: var(--card-hover); }
+  .format-chip .fq-stepper .fq { margin-top: 0; min-width: 16px; }
+
+  .note-input {
+    margin-top: 8px;
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .note-input::placeholder { color: var(--text-faint); }
+
+  /* CART SHEET */
+  .cart-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--gold);
+    color: #211a10;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 25;
+  }
+  .cart-bar .cta { font-size: 14px; text-decoration: underline; }
+
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 40;
+    display: none;
+  }
+  .sheet-overlay.open { display: block; }
+  .sheet {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-elevated);
+    border-radius: 20px 20px 0 0;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 41;
+  }
+  .sheet-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sheet-head h3 { margin: 0; font-family: 'Bevan', serif; font-weight: 400; color: var(--gold-bright); }
+  .sheet-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
+  .sheet-foot { padding: 14px 18px; border-top: 1px solid var(--line); }
+
+  .item-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    gap: 10px;
+  }
+  .item-line:last-child { border-bottom: none; }
+  .item-line .iname { font-weight: 600; font-size: 14px; }
+  .item-line .ifmt { color: var(--text-dim); font-size: 12px; }
+  .item-line .inote { color: var(--gold); font-size: 12px; margin-top: 2px; font-style: italic; }
+  .item-line .remove-btn {
+    background: none; border: none; color: var(--red-bright); font-size: 12px; cursor: pointer; text-decoration: underline;
+  }
+
+  .primary-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #211a10;
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary-btn:active { background: var(--gold-bright); }
+  .secondary-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .danger-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--red-bright);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* ADMIN */
+  .admin-tab {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .admin-tab-head {
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  }
+  .admin-tab-head .away { font-size: 12px; color: var(--text-faint); }
+  .admin-items { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; display: none; }
+  .admin-items.open { display: block; }
+  .admin-items .aline { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; color: var(--text-dim); }
+  .admin-items .aline b { color: var(--text); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-faint); }
+  .empty-state .em { font-size: 34px; margin-bottom: 10px; }
+
+  /* CUSTOM MODAL (reemplaza prompt/confirm nativos, bloqueados en el visor) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .modal-box h4 {
+    margin: 0 0 12px;
+    font-family: 'Bevan', serif;
+    font-weight: 400;
+    color: var(--gold-bright);
+    font-size: 17px;
+  }
+  .modal-box input[type="text"] {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 14px;
+  }
+  .modal-box .modal-actions { display: flex; gap: 8px; }
+  .modal-box .modal-actions button { flex: 1; margin-top: 0; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   GALLO POS — v1 (login de meseros + menú + cuentas en vivo)
+   Estado compartido vía capability "db" cuando está disponible;
+   si no, funciona en modo local de un solo dispositivo (demo).
+--------------------------------------------------------------- */
+
+const MENU = [
+  { cat: "Cervezas", simple: true, items: [
+    "Corona Extra","Corona Light","Victoria","Modelo Especial/Negra","Bud Light","Pacífico","Michelob Ultra","Budweiser"
+  ]},
+  { cat: "Whiskey", formats: true, items: [
+    { n: "Buchanans 12", f: ["copeo","litro","botella"] },
+    { n: "Buchanans Master", f: ["copeo","litro","botella"] },
+    { n: "Buchanans 18", f: ["copeo","litro","botella"] },
+    { n: "Buchanans Piña", f: ["copeo","litro"] },
+    { n: "Etiqueta Negra", f: ["copeo","litro","botella"] },
+    { n: "Double Black", f: ["copeo","litro"] },
+    { n: "Jack Daniels", f: ["copeo","litro"] },
+    { n: "Chivas Regal", f: ["copeo","litro"] },
+    { n: "Macallan 12", f: ["copeo","litro"] },
+  ]},
+  { cat: "Coctelería Tradicional", formats: true, items: [
+    { n: "Margarita", f: ["copeo","litro"] },
+    { n: "Mezcalita", f: ["copeo","litro"] },
+    { n: "Paloma", f: ["copeo","litro"] },
+    { n: "Cuba Libre", f: ["copeo","litro"] },
+    { n: "Vampiro", f: ["copeo","litro"] },
+    { n: "Mojito", f: ["copeo","litro"] },
+    { n: "Perro Salado", f: ["copeo","litro"] },
+    { n: "Gin Tonic", f: ["copeo","litro"] },
+    { n: "Carajillo", f: ["copeo","litro"] },
+    { n: "Clericot", f: ["copeo","litro"] },
+    { n: "Piña Colada", f: ["copeo","litro"] },
+  ]},
+  { cat: "Coctelería de la Casa", formats: true, items: [
+    { n: "Jagger 43", f: ["copeo","litro"] },
+    { n: "Gallo Special", f: ["copeo","litro"] },
+    { n: "Gallito", f: ["copeo","litro"] },
+    { n: "Gallo Giro", f: ["copeo","litro"] },
+    { n: "Gallo de 1/2", f: ["copeo","litro"] },
+    { n: "Gallo de Pulgada", f: ["copeo","litro"] },
+    { n: "Hot Jimmy", f: ["copeo","litro"] },
+  ]},
+  { cat: "Sin Alcohol", items: [
+    { n: "Piña Colada Virgen", f: ["copeo","litro"] },
+    { n: "Limonada Frappé", f: ["copeo","litro"] },
+    { n: "Limonada Natural", f: ["copeo","litro"] },
+    { n: "Limonada Mineral", f: ["copeo","litro"] },
+    { n: "Clericot Virgen", f: [] },
+    { n: "Refresco", f: [] },
+    { n: "Agua", f: [] },
+  ], mixed: true },
+  { cat: "Shots", simple: true, items: [
+    "Perla Negra","Bufanda","Gallito","Don Julio","Maestro Dobel","400 Conejos","Baby Mango","Bandera","Hot Danny"
+  ]},
+  { cat: "Ron y Vodka", formats: true, items: [
+    { n: "Bacardi", f: ["copeo","litro","botella"] },
+    { n: "Bacardi Mango", f: ["copeo","litro","botella"] },
+    { n: "Smirnoff Tamarindo", f: ["copeo","litro","botella"] },
+    { n: "Capitán Morgan", f: ["copeo","litro","botella"] },
+    { n: "Absolut Vodka", f: ["copeo","litro","botella"] },
+  ]},
+  { cat: "Tequila y Mezcal", formats: true, items: [
+    { n: "Don Julio 70", f: ["copeo","litro","botella"] },
+    { n: "Don Julio Reposado", f: ["copeo","litro","botella"] },
+    { n: "Gran Malo", f: ["copeo","litro","botella"] },
+    { n: "Maestro Dobel", f: ["copeo","litro","botella"] },
+    { n: "1800 Cristalino", f: ["copeo","litro","botella"] },
+    { n: "Jose Cuervo Esp", f: ["copeo","litro","botella"] },
+    { n: "400 Conejos", f: ["copeo","litro","botella"] },
+  ]},
+];
+
+const DEFAULT_WAITERS = ["Laura","Diego","Ana","Pepe"];
+
+let wsConn = null;
+let syncStatus = "connecting"; // connecting | synced | offline
+
+function loadLocal(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
+}
+function saveLocal(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+// Estado inicial: lo que haya en caché local mientras se conecta al servidor
+let waitersState = loadLocal("gallo_waiters_cache", { names: DEFAULT_WAITERS.slice(), claimedBy: {} });
+let tabsState = loadLocal("gallo_tabs_cache", []);
+
+let session = {
+  screen: "login", // login | home | menu | admin
+  myName: localStorage.getItem("gallo_my_name") || null,
+  activeTabId: null,
+  openCategory: null,
+  adminOpenTab: null,
+  adminOpenWaiter: null,
+};
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function showInputModal({ title, placeholder = "", initial = "", okLabel = "Guardar", cancelLabel = "Cancelar", allowEmpty = false, inputType = "text" }, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h4>${title}</h4>
+      <input type="${inputType}" id="modalInput" placeholder="${placeholder}" value="${initial}">
+      <div class="modal-actions">
+        <button class="secondary-btn" id="modalCancel">${cancelLabel}</button>
+        <button class="primary-btn" id="modalOk">${okLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector("#modalInput");
+  input.focus();
+  const close = () => document.body.contains(overlay) && document.body.removeChild(overlay);
+  overlay.querySelector("#modalCancel").onclick = close;
+  overlay.querySelector("#modalOk").onclick = () => {
+    const val = input.value.trim();
+    if (!val && !allowEmpty) { input.focus(); return; }
+    close();
+    onConfirm(val);
+  };
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") overlay.querySelector("#modalOk").click();
+    if (e.key === "Escape") close();
+  };
+}
+
+function showConfirmModal({ title, message, okLabel = "Confirmar", cancelLabel = "Cancelar", danger = false }, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h4>${title}</h4>
+      <div style="color:var(--text-dim); font-size:14px; margin-bottom:16px; line-height:1.4;">${message}</div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="modalCancel">${cancelLabel}</button>
+        <button class="${danger ? "danger-btn" : "primary-btn"}" id="modalOk">${okLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => document.body.contains(overlay) && document.body.removeChild(overlay);
+  overlay.querySelector("#modalCancel").onclick = close;
+  overlay.querySelector("#modalOk").onclick = () => { close(); onConfirm(); };
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+/* ---------------- CONEXIÓN AL SERVIDOR (API + WebSocket en tiempo real) ---------------- */
+
+async function apiCall(method, path, body) {
+  try {
+    const res = await fetch(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, status: res.status, error: err.error || "error" };
+    }
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, status: 0, error: "sin conexión" };
+  }
+}
+
+function applyServerState(newState) {
+  if (!newState) return;
+  waitersState = newState.waiters;
+  tabsState = newState.tabs;
+  saveLocal("gallo_waiters_cache", waitersState);
+  saveLocal("gallo_tabs_cache", tabsState);
+  renderApp();
+}
+
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  let ws;
+  try {
+    ws = new WebSocket(proto + "//" + location.host + "/ws");
+  } catch (e) {
+    syncStatus = "offline"; renderApp();
+    return;
+  }
+  wsConn = ws;
+  ws.onopen = () => { syncStatus = "synced"; renderApp(); };
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "state") applyServerState(msg.state);
+    } catch (e) {}
+  };
+  ws.onclose = () => {
+    syncStatus = "offline";
+    renderApp();
+    setTimeout(connectWS, 2500); // reintenta solo
+  };
+  ws.onerror = () => {};
+}
+
+async function initConnection() {
+  const res = await apiCall("GET", "/api/state");
+  if (res.ok) {
+    applyServerState(res.data);
+    syncStatus = "synced";
+  } else {
+    syncStatus = "offline";
+  }
+  renderApp();
+  connectWS();
+}
+
+/* ---------------- ACCIONES: siempre contra el servidor ---------------- */
+
+function enterAdmin() {
+  if (sessionStorage.getItem("gallo_admin_ok") === "1") {
+    session.screen = "admin";
+    renderApp();
+    return;
+  }
+  showInputModal({ title: "Acceso administrador", placeholder: "Contraseña", okLabel: "Entrar", inputType: "password" }, (pass) => {
+    apiCall("POST", "/api/admin/verify", { password: pass }).then((res) => {
+      if (!res.ok) { toast("Contraseña incorrecta"); return; }
+      sessionStorage.setItem("gallo_admin_ok", "1");
+      session.screen = "admin";
+      renderApp();
+    });
+  });
+}
+
+function claimName(name) {
+  apiCall("POST", "/api/waiters/claim", { name }).then((res) => {
+    if (!res.ok) {
+      if (res.status === 409) toast(name + " ya está ocupado");
+      else toast("No se pudo conectar al servidor");
+      return;
+    }
+    waitersState = { ...waitersState, claimedBy: { ...waitersState.claimedBy, [name]: true } };
+    saveLocal("gallo_waiters_cache", waitersState);
+    session.myName = name;
+    localStorage.setItem("gallo_my_name", name);
+    session.screen = "home";
+    renderApp();
+  });
+}
+
+function releaseWaiterName(name) {
+  apiCall("POST", "/api/waiters/release", { name }).then((res) => {
+    if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+    const updated = { ...waitersState.claimedBy };
+    delete updated[name];
+    waitersState = { ...waitersState, claimedBy: updated };
+    saveLocal("gallo_waiters_cache", waitersState);
+    toast(name + " liberado");
+    renderApp();
+  });
+}
+
+function releaseAllWaiters() {
+  apiCall("POST", "/api/waiters/release-all").then((res) => {
+    if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+    waitersState = { ...waitersState, claimedBy: {} };
+    saveLocal("gallo_waiters_cache", waitersState);
+    localStorage.removeItem("gallo_my_name");
+    session.myName = null;
+    session.screen = "login";
+    toast("Turno cerrado — nombres liberados");
+    renderApp();
+  });
+}
+
+function addWaiterName() {
+  showInputModal({ title: "Nuevo mesero", placeholder: "Nombre del mesero", okLabel: "Agregar" }, (clean) => {
+    apiCall("POST", "/api/waiters/add", { name: clean }).then((res) => {
+      if (!res.ok) { toast(res.status === 409 ? "Ese nombre ya existe" : "No se pudo conectar al servidor"); return; }
+      waitersState = { ...waitersState, names: [...waitersState.names, clean] };
+      saveLocal("gallo_waiters_cache", waitersState);
+      renderApp();
+    });
+  });
+}
+
+function removeWaiterName(name) {
+  showConfirmModal({
+    title: "Eliminar mesero",
+    message: `¿Eliminar a "${name}" de la lista por completo? Esto no se puede deshacer — si solo no llegó hoy, mejor usa "liberar" en vez de eliminar.`,
+    okLabel: "Sí, eliminar",
+    danger: true,
+  }, () => {
+    apiCall("POST", "/api/waiters/remove", { name }).then((res) => {
+      if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+      waitersState = {
+        ...waitersState,
+        names: waitersState.names.filter((n) => n !== name),
+        claimedBy: Object.fromEntries(Object.entries(waitersState.claimedBy).filter(([n]) => n !== name)),
+      };
+      saveLocal("gallo_waiters_cache", waitersState);
+      toast(name + " eliminado");
+      renderApp();
+    });
+  });
+}
+
+function createTab(assignedWaiter) {
+  showInputModal({ title: "Nueva cuenta", placeholder: "Ej. Mesa 5, Barra, Juan...", okLabel: "Crear cuenta", allowEmpty: true }, (table) => {
+    apiCall("POST", "/api/tabs", { waiter: assignedWaiter, table }).then((res) => {
+      if (!res.ok) { toast("No se pudo crear la cuenta — revisa la conexión"); return; }
+      tabsState = [...tabsState, res.data.tab];
+      saveLocal("gallo_tabs_cache", tabsState);
+      session.activeTabId = res.data.tab.id;
+      session.screen = "menu";
+      session.openCategory = null;
+      renderApp();
+    });
+  });
+}
+
+function updateTabItems(tabId, items) {
+  // Optimista: refleja el cambio de inmediato en pantalla mientras se confirma con el servidor
+  const idx = tabsState.findIndex(t => t.id === tabId);
+  if (idx >= 0) tabsState[idx] = { ...tabsState[idx], items };
+  saveLocal("gallo_tabs_cache", tabsState);
+  renderApp();
+  apiCall("PATCH", "/api/tabs/" + tabId + "/items", { items }).then((res) => {
+    if (!res.ok) toast("No se pudo guardar — revisa la conexión");
+  });
+}
+
+function closeTab(tabId) {
+  apiCall("PATCH", "/api/tabs/" + tabId + "/status", { status: "closed" }).then((res) => {
+    if (!res.ok) { toast("No se pudo cerrar la cuenta — revisa la conexión"); return; }
+    const idx = tabsState.findIndex(t => t.id === tabId);
+    if (idx >= 0) tabsState[idx] = { ...tabsState[idx], status: "closed" };
+    saveLocal("gallo_tabs_cache", tabsState);
+    toast("Cuenta cerrada");
+    session.screen = session.myName ? "home" : "admin";
+    session.activeTabId = null;
+    renderApp();
+  });
+}
+
+/* ---------------- RENDER ---------------- */
+
+function renderApp() {
+  const app = document.getElementById("app");
+  if (session.screen === "login") return renderLogin(app);
+  if (session.screen === "home") return renderHome(app);
+  if (session.screen === "menu") return renderMenu(app);
+  if (session.screen === "admin") return renderAdmin(app);
+}
+
+function syncBadge() {
+  const map = {
+    connecting: { text: "Conectando al servidor…", color: "var(--gold)" },
+    synced: { text: "● Conectado — sincronizado en vivo", color: "var(--green)" },
+    offline: { text: "Sin conexión al servidor — reintentando…", color: "var(--red-bright)" },
+  };
+  const s = map[syncStatus] || map.connecting;
+  return `<div style="text-align:center; font-size:11px; color:${s.color}; margin-top:14px;">${s.text}</div>`;
+}
+
+function renderLogin(app) {
+  const names = waitersState.names;
+  app.innerHTML = `
+    <div class="content" style="padding-bottom:40px;">
+      <div class="login-hero">
+        <div class="rooster">🐓</div>
+        <div class="brand">GALLO</div>
+        <div class="tag">Restaurant · Sport · Bar</div>
+      </div>
+      <div class="section-title" style="text-align:center;">Elige tu nombre</div>
+      <div class="name-grid" id="nameGrid"></div>
+      <div class="manage-names">
+        <button id="addNameBtn">+ Agregar mesero</button>
+      </div>
+      <div class="admin-link" id="adminLink">Entrar como administrador</div>
+      <div class="admin-link" id="resetAllLink" style="color: var(--red-bright);">Liberar todos los nombres</div>
+      ${syncBadge()}
+    </div>
+  `;
+  const grid = document.getElementById("nameGrid");
+  names.forEach(name => {
+    const taken = !!waitersState.claimedBy[name];
+    const btn = document.createElement("div");
+    btn.className = "name-btn" + (taken ? " taken" : "");
+    btn.innerHTML = name + (taken ? '<span class="who">ocupado — toca para liberar</span>' : "");
+    if (!taken) {
+      btn.onclick = () => claimName(name);
+    } else {
+      btn.onclick = () => {
+        showConfirmModal({
+          title: "Nombre ocupado",
+          message: `"${name}" ya está marcado como ocupado (probablemente de un turno anterior que no se cerró). ¿Quieres liberarlo para poder usarlo?`,
+          okLabel: "Liberar este nombre",
+        }, () => releaseWaiterName(name));
+      };
+    }
+    grid.appendChild(btn);
+  });
+  document.getElementById("addNameBtn").onclick = addWaiterName;
+  document.getElementById("adminLink").onclick = enterAdmin;
+  document.getElementById("resetAllLink").onclick = () => {
+    showConfirmModal({
+      title: "Liberar todos los nombres",
+      message: "Esto libera a todos los meseros marcados como ocupados (útil si quedaron atorados de una prueba anterior). ¿Continuar?",
+      okLabel: "Sí, liberar todos",
+      danger: true,
+    }, releaseAllWaiters);
+  };
+}
+
+function renderHome(app) {
+  const myTabs = tabsState.filter(t => t.waiter === session.myName && t.status === "open");
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Mesero: ${session.myName}</div>
+      </div>
+      <div class="icon-btn" id="logoutBtn" title="Salir">⎋</div>
+    </div>
+    <div class="content">
+      <div class="section-title">Mis cuentas abiertas</div>
+      <div id="tabList"></div>
+      <button class="new-tab-btn" id="newTabBtn">+ Nueva cuenta</button>
+    </div>
+  `;
+  const list = document.getElementById("tabList");
+  if (myTabs.length === 0) {
+    list.innerHTML = `<div class="empty-note">No tienes cuentas abiertas todavía.</div>`;
+  } else {
+    myTabs.forEach(t => {
+      const count = (t.items || []).reduce((s, i) => s + i.qty, 0);
+      const div = document.createElement("div");
+      div.className = "tab-card";
+      div.innerHTML = `
+        <div>
+          <div class="tname">${t.table ? t.table : "Cuenta sin nombre"}</div>
+          <div class="tmeta">${(t.items || []).length} producto(s)</div>
+        </div>
+        <div class="tcount">${count}</div>
+      `;
+      div.onclick = () => { session.activeTabId = t.id; session.screen = "menu"; session.openCategory = null; renderApp(); };
+      list.appendChild(div);
+    });
+  }
+  document.getElementById("newTabBtn").onclick = () => createTab(session.myName);
+  document.getElementById("logoutBtn").onclick = () => { session.screen = "login"; renderApp(); };
+}
+
+function findTab(id) { return tabsState.find(t => t.id === id); }
+
+function renderMenu(app) {
+  const tab = findTab(session.activeTabId);
+  if (!tab) { session.screen = session.myName ? "home" : "admin"; return renderApp(); }
+  const items = tab.items || [];
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="icon-btn" id="backBtn">←</div>
+      <div style="text-align:right;">
+        <h1 class="brand" style="font-size:16px;">${tab.table || "Cuenta"}</h1>
+        <div class="sub">${tab.waiter}</div>
+      </div>
+    </div>
+    <div class="content" id="menuContent"></div>
+    <div class="cart-bar" id="cartBar">
+      <span>${totalQty} producto(s) en la cuenta</span>
+      <span class="cta">Ver cuenta →</span>
+    </div>
+  `;
+  document.getElementById("backBtn").onclick = () => {
+    session.screen = session.myName ? "home" : "admin";
+    session.activeTabId = null;
+    renderApp();
+  };
+  document.getElementById("cartBar").onclick = () => openCartSheet(tab);
+
+  const menuContent = document.getElementById("menuContent");
+  MENU.forEach(cat => {
+    const catEl = document.createElement("div");
+    catEl.className = "category";
+    const isOpen = session.openCategory === cat.cat;
+    catEl.innerHTML = `
+      <div class="category-head ${isOpen ? "open" : ""}">
+        <span>${cat.cat}</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isOpen ? "open" : ""}"></div>
+    `;
+    catEl.querySelector(".category-head").onclick = () => {
+      session.openCategory = isOpen ? null : cat.cat;
+      renderApp();
+    };
+    const body = catEl.querySelector(".category-body");
+    if (isOpen) {
+      const productItems = cat.simple
+        ? cat.items.map(n => ({ n, f: [] }))
+        : cat.items;
+
+      // sort most-ordered-first within this tab's own current order as a simple proxy
+      const sorted = [...productItems].sort((a, b) => {
+        const qa = items.filter(i => i.name === a.n).reduce((s,i)=>s+i.qty,0);
+        const qb = items.filter(i => i.name === b.n).reduce((s,i)=>s+i.qty,0);
+        return qb - qa;
+      });
+
+      sorted.forEach(p => {
+        body.appendChild(renderProductRow(tab, p));
+      });
+    }
+    menuContent.appendChild(catEl);
+  });
+}
+
+function renderProductRow(tab, product) {
+  const items = tab.items || [];
+  const row = document.createElement("div");
+  row.className = "product-row";
+
+  if (!product.f || product.f.length === 0) {
+    // simple product, single format
+    const existing = items.find(i => i.name === product.n && !i.format);
+    const qty = existing ? existing.qty : 0;
+    row.innerHTML = `
+      <div class="product-main">
+        <div class="product-name">${product.n}</div>
+        <div class="qty-stepper">
+          <button class="minus">−</button>
+          <span class="qn">${qty}</span>
+          <button class="plus">+</button>
+        </div>
+      </div>
+      <input class="note-input" placeholder="Nota (opcional)" style="${qty > 0 ? '' : 'display:none;'}" value="${existing ? (existing.note || "") : ""}">
+    `;
+    const noteInput = row.querySelector(".note-input");
+    row.querySelector(".plus").onclick = () => changeQty(tab, product.n, null, +1);
+    row.querySelector(".minus").onclick = () => changeQty(tab, product.n, null, -1);
+    noteInput.onchange = (e) => setNote(tab, product.n, null, e.target.value);
+  } else {
+    // formats: copeo / litro / botella — separate line items
+    row.innerHTML = `<div class="product-name" style="margin-bottom:4px;">${product.n}</div><div class="format-row"></div>`;
+    const fr = row.querySelector(".format-row");
+    product.f.forEach(fmt => {
+      const existing = items.find(i => i.name === product.n && i.format === fmt);
+      const qty = existing ? existing.qty : 0;
+      const chip = document.createElement("div");
+      chip.className = "format-chip" + (qty > 0 ? " has-qty" : "");
+      if (qty > 0) {
+        chip.innerHTML = `
+          <div class="fq-label">${fmt}</div>
+          <div class="fq-stepper">
+            <button class="fq-minus">−</button>
+            <span class="fq">${qty}</span>
+            <button class="fq-plus">+</button>
+          </div>
+        `;
+        chip.querySelector(".fq-minus").onclick = (e) => { e.stopPropagation(); changeQty(tab, product.n, fmt, -1); };
+        chip.querySelector(".fq-plus").onclick = (e) => { e.stopPropagation(); changeQty(tab, product.n, fmt, +1); };
+      } else {
+        chip.innerHTML = fmt;
+        chip.onclick = () => changeQty(tab, product.n, fmt, +1);
+      }
+      fr.appendChild(chip);
+    });
+    const anyQty = product.f.some(fmt => items.find(i => i.name === product.n && i.format === fmt && i.qty > 0));
+    if (anyQty) {
+      const noteInput = document.createElement("input");
+      noteInput.className = "note-input";
+      noteInput.placeholder = "Nota (opcional, aplica a este producto)";
+      const anyItem = items.find(i => i.name === product.n && i.qty > 0);
+      noteInput.value = anyItem ? (anyItem.note || "") : "";
+      noteInput.onchange = (e) => {
+        items.filter(i => i.name === product.n).forEach(i => i.note = e.target.value);
+        updateTabItems(tab.id, items);
+      };
+      row.appendChild(noteInput);
+    }
+  }
+  return row;
+}
+
+function changeQty(tab, name, format, delta) {
+  let items = [...(tab.items || [])];
+  let idx = items.findIndex(i => i.name === name && (format ? i.format === format : !i.format));
+  if (idx === -1 && delta > 0) {
+    items.push({ id: uid(), name, format: format || null, qty: 1, note: "", category: null });
+  } else if (idx >= 0) {
+    const newQty = items[idx].qty + delta;
+    if (newQty <= 0) {
+      items.splice(idx, 1);
+    } else {
+      items[idx] = { ...items[idx], qty: newQty };
+    }
+  }
+  updateTabItems(tab.id, items);
+}
+
+function setNote(tab, name, format, note) {
+  let items = [...(tab.items || [])];
+  const idx = items.findIndex(i => i.name === name && (format ? i.format === format : !i.format));
+  if (idx >= 0) {
+    items[idx] = { ...items[idx], note };
+    updateTabItems(tab.id, items);
+  }
+}
+
+function openCartSheet(tab) {
+  const overlay = document.createElement("div");
+  overlay.className = "sheet-overlay open";
+  const items = tab.items || [];
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>${tab.table || "Cuenta"}</h3>
+        <div class="icon-btn" id="closeSheet">✕</div>
+      </div>
+      <div class="sheet-body" id="sheetBody"></div>
+      <div class="sheet-foot">
+        <button class="primary-btn" id="confirmOrder">Confirmar y enviar</button>
+        <button class="danger-btn" id="closeTabBtn">Cerrar cuenta</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const body = overlay.querySelector("#sheetBody");
+  if (items.length === 0) {
+    body.innerHTML = `<div class="empty-note">Todavía no has agregado productos.</div>`;
+  } else {
+    items.forEach(it => {
+      const line = document.createElement("div");
+      line.className = "item-line";
+      line.innerHTML = `
+        <div>
+          <div class="iname">${it.qty}× ${it.name}${it.format ? ` <span class="ifmt">(${it.format})</span>` : ""}</div>
+          ${it.note ? `<div class="inote">${it.note}</div>` : ""}
+        </div>
+        <button class="remove-btn">quitar</button>
+      `;
+      line.querySelector(".remove-btn").onclick = () => {
+        const newItems = items.filter(i => i.id !== it.id);
+        updateTabItems(tab.id, newItems);
+        document.body.removeChild(overlay);
+      };
+      body.appendChild(line);
+    });
+  }
+  overlay.querySelector("#closeSheet").onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector("#confirmOrder").onclick = () => {
+    toast("Orden enviada ✓");
+    document.body.removeChild(overlay);
+  };
+  overlay.querySelector("#closeTabBtn").onclick = () => {
+    showConfirmModal({
+      title: "Cerrar cuenta",
+      message: "¿Cerrar esta cuenta? Ya no podrás agregar productos.",
+      okLabel: "Sí, cerrar",
+      danger: true
+    }, () => {
+      closeTab(tab.id);
+      document.body.contains(overlay) && document.body.removeChild(overlay);
+    });
+  };
+}
+
+function renderAdminTabCard(t) {
+  const count = (t.items || []).reduce((s, i) => s + i.qty, 0);
+  const isOpen = session.adminOpenTab === t.id;
+  const card = document.createElement("div");
+  card.className = "admin-tab";
+  card.style.marginBottom = "8px";
+  card.innerHTML = `
+    <div class="admin-tab-head">
+      <div>
+        <div class="tname">${t.table || "Cuenta sin nombre"}</div>
+        <div class="away">${count} producto(s)</div>
+      </div>
+      <div class="chev">${isOpen ? "▴" : "▾"}</div>
+    </div>
+    <div class="admin-items ${isOpen ? "open" : ""}" id="items-${t.id}"></div>
+  `;
+  card.querySelector(".admin-tab-head").onclick = () => {
+    session.adminOpenTab = isOpen ? null : t.id;
+    renderApp();
+  };
+  if (isOpen) {
+    const itemsWrap = card.querySelector(".admin-items");
+    (t.items || []).forEach(it => {
+      const l = document.createElement("div");
+      l.className = "aline";
+      l.innerHTML = `<span><b>${it.qty}×</b> ${it.name}${it.format ? " (" + it.format + ")" : ""}${it.note ? " — " + it.note : ""}</span>`;
+      itemsWrap.appendChild(l);
+    });
+    const editBtn = document.createElement("button");
+    editBtn.className = "secondary-btn";
+    editBtn.textContent = "Abrir y editar esta cuenta";
+    editBtn.onclick = () => { session.activeTabId = t.id; session.screen = "menu"; session.openCategory = null; renderApp(); };
+    itemsWrap.appendChild(editBtn);
+  }
+  return card;
+}
+
+function renderAdmin(app) {
+  const openTabs = tabsState.filter(t => t.status === "open");
+  const closedTabs = tabsState.filter(t => t.status === "closed");
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Panel administrador</div>
+      </div>
+      <div class="icon-btn" id="backLogin">←</div>
+    </div>
+    <div class="content">
+      <button class="new-tab-btn" id="newAdminTab" style="margin-bottom:18px;">+ Nueva cuenta</button>
+      <div class="section-title">Meseros (${waitersState.names.length})</div>
+      <div id="waiterMgmtList"></div>
+      <button class="secondary-btn" id="addWaiterBtn" style="margin-top:4px;">+ Agregar mesero</button>
+      <div class="section-title">Cuentas abiertas (${openTabs.length})</div>
+      <div id="openList"></div>
+      <div class="section-title">Cierre de turno</div>
+      <button class="danger-btn" id="shiftClose">Liberar nombres de meseros (corte de turno)</button>
+      ${closedTabs.length ? `<div class="section-title">Cuentas cerradas hoy (${closedTabs.length})</div><div id="closedList"></div>` : ""}
+      ${syncBadge()}
+    </div>
+  `;
+  document.getElementById("backLogin").onclick = () => { session.screen = "login"; renderApp(); };
+  document.getElementById("addWaiterBtn").onclick = addWaiterName;
+  document.getElementById("newAdminTab").onclick = () => {
+    showInputModal({ title: "Nueva cuenta", placeholder: "¿A qué mesero se asigna? (vacío = tú)", okLabel: "Crear", allowEmpty: true }, (waiter) => {
+      createTab(waiter && waiter.trim() ? waiter.trim() : "Admin");
+    });
+  };
+  document.getElementById("shiftClose").onclick = () => {
+    showConfirmModal({
+      title: "Corte de turno",
+      message: "Esto libera todos los nombres de meseros para el siguiente turno. ¿Continuar?",
+      okLabel: "Sí, cerrar turno",
+      danger: true
+    }, releaseAllWaiters);
+  };
+
+  const waiterList = document.getElementById("waiterMgmtList");
+  waitersState.names.forEach(name => {
+    const taken = !!waitersState.claimedBy[name];
+    const row = document.createElement("div");
+    row.className = "tab-card";
+    row.style.cursor = "default";
+    row.innerHTML = `
+      <div>
+        <div class="tname">${name}</div>
+        <div class="tmeta">${taken ? "En turno ahorita" : "Libre"}</div>
+      </div>
+      <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 14px;">Eliminar</button>
+    `;
+    row.querySelector("button").onclick = () => removeWaiterName(name);
+    waiterList.appendChild(row);
+  });
+
+  const openList = document.getElementById("openList");
+  if (openTabs.length === 0) {
+    openList.innerHTML = `<div class="empty-note">No hay cuentas abiertas.</div>`;
+  }
+  const byWaiter = {};
+  openTabs.forEach(t => {
+    const key = t.waiter || "Sin asignar";
+    if (!byWaiter[key]) byWaiter[key] = [];
+    byWaiter[key].push(t);
+  });
+  Object.keys(byWaiter).forEach(waiterName => {
+    const waiterTabs = byWaiter[waiterName];
+    const totalCount = waiterTabs.reduce((s, t) => s + (t.items || []).reduce((s2, i) => s2 + i.qty, 0), 0);
+    const isWaiterOpen = session.adminOpenWaiter === waiterName;
+    const group = document.createElement("div");
+    group.className = "category";
+    group.innerHTML = `
+      <div class="category-head ${isWaiterOpen ? "open" : ""}">
+        <span>${waiterName} <span style="color:var(--text-faint); font-weight:400;">— ${waiterTabs.length} cuenta(s), ${totalCount} producto(s)</span></span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isWaiterOpen ? "open" : ""}" style="padding: 10px;"></div>
+    `;
+    group.querySelector(".category-head").onclick = () => {
+      session.adminOpenWaiter = isWaiterOpen ? null : waiterName;
+      renderApp();
+    };
+    if (isWaiterOpen) {
+      const body = group.querySelector(".category-body");
+      waiterTabs.forEach(t => body.appendChild(renderAdminTabCard(t)));
+    }
+    openList.appendChild(group);
+  });
+
+  if (closedTabs.length) {
+    const closedList = document.getElementById("closedList");
+    closedTabs.forEach(t => {
+      const count = (t.items || []).reduce((s, i) => s + i.qty, 0);
+      const div = document.createElement("div");
+      div.className = "tab-card";
+      div.style.cursor = "default";
+      div.innerHTML = `
+        <div>
+          <div class="tname">${t.table || "Cuenta sin nombre"}</div>
+          <div class="tmeta">Mesero: ${t.waiter}</div>
+        </div>
+        <div class="tcount">${count}</div>
+      `;
+      closedList.appendChild(div);
+    });
+  }
+}
+
+/* ---------------- INIT ---------------- */
+renderApp(); // primero muestra lo que haya en caché, sin esperar al servidor
+initConnection();
+</script>
+</body>
+</html>
