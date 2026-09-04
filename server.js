@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'gallo2026';
 
 function defaultState() {
   return {
@@ -103,6 +104,15 @@ app.post('/api/waiters/add', (req, res) => {
   res.json({ ok: true, state });
 });
 
+app.post('/api/waiters/remove', (req, res) => {
+  const { name } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name requerido' });
+  state.waiters.names = state.waiters.names.filter((n) => n !== name);
+  delete state.waiters.claimedBy[name];
+  persistAndBroadcast();
+  res.json({ ok: true, state });
+});
+
 app.post('/api/tabs', (req, res) => {
   const { waiter, table } = req.body || {};
   if (!waiter) return res.status(400).json({ error: 'waiter requerido' });
@@ -134,6 +144,12 @@ app.patch('/api/tabs/:id/status', (req, res) => {
   tab.status = req.body.status;
   persistAndBroadcast();
   res.json({ ok: true, state });
+});
+
+app.post('/api/admin/verify', (req, res) => {
+  const { password } = req.body || {};
+  if (password === ADMIN_PASSWORD) return res.json({ ok: true });
+  res.status(401).json({ ok: false, error: 'contraseña incorrecta' });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
