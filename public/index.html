@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gallo POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bevan&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14110F;
+    --bg-elevated: #1C1815;
+    --card: #241F1B;
+    --card-hover: #2C2620;
+    --line: #38312A;
+    --gold: #C9A15A;
+    --gold-bright: #E0B96B;
+    --text: #F3ECE1;
+    --text-dim: #9C8F80;
+    --text-faint: #6B6157;
+    --red: #A63A2E;
+    --red-bright: #C24C3D;
+    --green: #6B9B6E;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14110F; --bg-elevated: #1C1815; --card: #241F1B; --card-hover: #2C2620;
+      --line: #38312A; --gold: #C9A15A; --gold-bright: #E0B96B; --text: #F3ECE1;
+      --text-dim: #9C8F80; --text-faint: #6B6157; --red: #A63A2E; --red-bright: #C24C3D; --green: #6B9B6E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14110F; --bg-elevated: #1C1815; --card: #241F1B; --card-hover: #2C2620;
+    --line: #38312A; --gold: #C9A15A; --gold-bright: #E0B96B; --text: #F3ECE1;
+    --text-dim: #9C8F80; --text-faint: #6B6157; --red: #A63A2E; --red-bright: #C24C3D; --green: #6B9B6E;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    position: relative;
+  }
+  .brand {
+    font-family: 'Bevan', serif;
+    letter-spacing: 0.5px;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .topbar h1 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--gold-bright);
+    font-family: 'Bevan', serif;
+    font-weight: 400;
+  }
+  .topbar .sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 10px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .icon-btn:active { background: var(--card-hover); }
+
+  .content { flex: 1; padding: 18px; padding-bottom: 100px; overflow-y: auto; }
+
+  /* LOGIN SCREEN */
+  .login-hero { text-align: center; padding: 40px 20px 10px; }
+  .rooster { font-size: 56px; line-height: 1; margin-bottom: 6px; }
+  .login-hero .brand { font-size: 40px; color: var(--gold-bright); }
+  .login-hero .tag { color: var(--text-dim); font-size: 13px; margin-top: 4px; letter-spacing: 0.3px; }
+
+  .name-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .name-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .name-btn:active { background: var(--card-hover); }
+  .name-btn.taken {
+    color: var(--text-faint);
+    background: transparent;
+    border-style: dashed;
+    cursor: not-allowed;
+  }
+  .name-btn.taken .who { display: block; font-size: 11px; font-weight: 400; margin-top: 4px; color: var(--text-faint); }
+
+  .admin-link {
+    display: block;
+    text-align: center;
+    margin-top: 36px;
+    color: var(--text-faint);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .manage-names {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .manage-names button {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* HOME (mesero) */
+  .section-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    margin: 22px 0 10px;
+    font-weight: 700;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .tab-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tab-card:active { background: var(--card-hover); }
+  .tab-card .tname { font-weight: 700; font-size: 16px; }
+  .tab-card .tmeta { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+  .tab-card .tcount {
+    background: var(--gold);
+    color: #211a10;
+    font-weight: 800;
+    font-size: 13px;
+    border-radius: 20px;
+    padding: 4px 10px;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .empty-note {
+    color: var(--text-faint);
+    font-size: 14px;
+    text-align: center;
+    padding: 30px 10px;
+  }
+
+  .new-tab-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #211a10;
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .new-tab-btn:active { background: var(--gold-bright); }
+
+  /* MENU / ORDER SCREEN */
+  .order-strip {
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 18px;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+  }
+  .order-strip b { color: var(--gold-bright); }
+
+  .category {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .category-head {
+    padding: 15px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .category-head .chev { color: var(--text-faint); transition: transform .15s; font-size: 13px; }
+  .category-head.open .chev { transform: rotate(180deg); }
+  .category-body { display: none; border-top: 1px solid var(--line); }
+  .category-body.open { display: block; }
+
+  .product-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .product-row:last-child { border-bottom: none; }
+  .product-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .product-name { font-size: 15px; font-weight: 500; }
+  .qty-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-elevated);
+    border-radius: 20px;
+    border: 1px solid var(--line);
+  }
+  .qty-stepper button {
+    width: 32px; height: 32px;
+    border: none;
+    background: none;
+    color: var(--gold-bright);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .qty-stepper .qn { min-width: 22px; text-align: center; font-weight: 700; font-size: 14px; }
+
+  .format-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .format-chip {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    background: var(--bg-elevated);
+  }
+  .format-chip .fq { display: block; font-size: 15px; margin-top: 2px; color: var(--text); }
+  .format-chip.has-qty { border-color: var(--gold); background: rgba(201,161,90,0.12); color: var(--gold-bright); cursor: default; padding: 6px 2px; }
+  .format-chip .fq-label { font-size: 11px; margin-bottom: 3px; }
+  .format-chip .fq-stepper { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .format-chip .fq-stepper button {
+    width: 24px; height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    color: var(--gold-bright);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .format-chip .fq-stepper button:active { background: var(--card-hover); }
+  .format-chip .fq-stepper .fq { margin-top: 0; min-width: 16px; }
+
+  .note-input {
+    margin-top: 8px;
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .note-input::placeholder { color: var(--text-faint); }
+
+  /* CART SHEET */
+  .cart-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--gold);
+    color: #211a10;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 25;
+  }
+  .cart-bar .cta { font-size: 14px; text-decoration: underline; }
+
+  .sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 40;
+    display: none;
+  }
+  .sheet-overlay.open { display: block; }
+  .sheet {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg-elevated);
+    border-radius: 20px 20px 0 0;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 41;
+  }
+  .sheet-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sheet-head h3 { margin: 0; font-family: 'Bevan', serif; font-weight: 400; color: var(--gold-bright); }
+  .sheet-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
+  .sheet-foot { padding: 14px 18px; border-top: 1px solid var(--line); }
+
+  .item-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    gap: 10px;
+  }
+  .item-line:last-child { border-bottom: none; }
+  .item-line .iname { font-weight: 600; font-size: 14px; }
+  .item-line .ifmt { color: var(--text-dim); font-size: 12px; }
+  .item-line .inote { color: var(--gold); font-size: 12px; margin-top: 2px; font-style: italic; }
+  .item-line .remove-btn {
+    background: none; border: none; color: var(--red-bright); font-size: 12px; cursor: pointer; text-decoration: underline;
+  }
+
+  .primary-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #211a10;
+    border: none;
+    border-radius: var(--radius);
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary-btn:active { background: var(--gold-bright); }
+  .secondary-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .danger-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--red-bright);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* ADMIN */
+  .admin-tab {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .admin-tab-head {
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  }
+  .admin-tab-head .away { font-size: 12px; color: var(--text-faint); }
+  .admin-items { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; display: none; }
+  .admin-items.open { display: block; }
+  .admin-items .aline { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; color: var(--text-dim); }
+  .admin-items .aline b { color: var(--text); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-faint); }
+  .empty-state .em { font-size: 34px; margin-bottom: 10px; }
+
+  /* CUSTOM MODAL (reemplaza prompt/confirm nativos, bloqueados en el visor) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .modal-box h4 {
+    margin: 0 0 12px;
+    font-family: 'Bevan', serif;
+    font-weight: 400;
+    color: var(--gold-bright);
+    font-size: 17px;
+  }
+  .modal-box input[type="text"] {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 14px;
+  }
+  .modal-box .modal-actions { display: flex; gap: 8px; }
+  .modal-box .modal-actions button { flex: 1; margin-top: 0; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   GALLO POS — v1 (login de meseros + menú + cuentas en vivo)
+   Estado compartido vía capability "db" cuando está disponible;
+   si no, funciona en modo local de un solo dispositivo (demo).
+--------------------------------------------------------------- */
+
+const MENU = [
+  { cat: "Cervezas", simple: true, items: [
+    "Corona Extra","Corona Light","Victoria","Modelo Especial/Negra","Bud Light","Pacífico","Michelob Ultra","Budweiser"
+  ]},
+  { cat: "Whiskey", formats: true, items: [
+    { n: "Buchanans 12", f: ["copeo","litro","botella"] },
+    { n: "Buchanans Master", f: ["copeo","litro","botella"] },
+    { n: "Buchanans 18", f: ["copeo","litro","botella"] },
+    { n: "Buchanans Piña", f: ["copeo","litro"] },
+    { n: "Etiqueta Negra", f: ["copeo","litro","botella"] },
+    { n: "Double Black", f: ["copeo","litro"] },
+    { n: "Jack Daniels", f: ["copeo","litro"] },
+    { n: "Chivas Regal", f: ["copeo","litro"] },
+    { n: "Macallan 12", f: ["copeo","litro"] },
+  ]},
+  { cat: "Coctelería Tradicional", formats: true, items: [
+    { n: "Margarita", f: ["copeo","litro"] },
+    { n: "Mezcalita", f: ["copeo","litro"] },
+    { n: "Paloma", f: ["copeo","litro"] },
+    { n: "Cuba Libre", f: ["copeo","litro"] },
+    { n: "Vampiro", f: ["copeo","litro"] },
+    { n: "Mojito", f: ["copeo","litro"] },
+    { n: "Perro Salado", f: ["copeo","litro"] },
+    { n: "Gin Tonic", f: ["copeo","litro"] },
+    { n: "Clericot", f: ["copeo","litro"] },
+    { n: "Piña Colada", f: ["copeo","litro"] },
+  ]},
+  { cat: "Coctelería de la Casa", formats: true, items: [
+    { n: "Jagger 43", f: ["copeo","litro"] },
+    { n: "Gallo Special", f: ["copeo","litro"] },
+    { n: "Gallo Giro", f: ["copeo","litro"] },
+    { n: "Gallo de 1/2", f: ["copeo","litro"] },
+    { n: "Gallo de Pulgada", f: ["copeo","litro"] },
+    { n: "Hot Jimmy", f: ["copeo","litro"] },
+  ]},
+  { cat: "Sin Alcohol", items: [
+    { n: "Piña Colada Virgen", f: ["copeo","litro"] },
+    { n: "Limonada Frappé", f: ["copeo","litro"] },
+    { n: "Limonada Natural", f: ["copeo","litro"] },
+    { n: "Limonada Mineral", f: ["copeo","litro"] },
+    { n: "Clericot Virgen", f: ["copeo","litro"] },
+    { n: "Refresco", f: [] },
+    { n: "Agua", f: [] },
+  ], mixed: true },
+  { cat: "Shots", simple: true, items: [
+    "Perla Negra","Bufanda","Gallito","Don Julio","Maestro Dobel","400 Conejos","Baby Mango","Bandera","Hot Danny"
+  ]},
+  { cat: "Ron y Vodka", formats: true, items: [
+    { n: "Bacardi", f: ["copeo","litro","botella"] },
+    { n: "Bacardi Mango", f: ["copeo","litro","botella"] },
+    { n: "Smirnoff Tamarindo", f: ["copeo","litro","botella"] },
+    { n: "Capitán Morgan", f: ["copeo","litro","botella"] },
+    { n: "Absolut Vodka", f: ["copeo","litro","botella"] },
+  ]},
+  { cat: "Tequila y Mezcal", formats: true, items: [
+    { n: "Don Julio 70", f: ["copeo","litro","botella"] },
+    { n: "Maestro Dobel", f: ["copeo","litro","botella"] },
+    { n: "1800 Cristalino", f: ["copeo","litro","botella"] },
+    { n: "Jose Cuervo Esp", f: ["copeo","litro"] },
+    { n: "400 Conejos", f: ["copeo","litro"] },
+  ]},
+];
+
+const DEFAULT_WAITERS = ["Laura","Diego","Ana","Pepe"];
+
+let wsConn = null;
+let syncStatus = "connecting"; // connecting | synced | offline
+
+function loadLocal(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
+}
+function saveLocal(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+// Estado inicial: lo que haya en caché local mientras se conecta al servidor
+let waitersState = loadLocal("gallo_waiters_cache", { names: DEFAULT_WAITERS.slice(), claimedBy: {} });
+let tabsState = loadLocal("gallo_tabs_cache", []);
+let pricesState = loadLocal("gallo_prices_cache", {});
+let shiftState = loadLocal("gallo_shift_cache", null);
+let ingredientsState = loadLocal("gallo_ingredients_cache", {});
+let recipesState = loadLocal("gallo_recipes_cache", {});
+let litroCupIngredientId = loadLocal("gallo_litrocup_cache", null);
+
+let session = {
+  screen: "login", // login | home | menu | admin
+  myName: localStorage.getItem("gallo_my_name") || null,
+  activeTabId: null,
+  openCategory: null,
+  adminOpenTab: null,
+  adminOpenWaiter: null,
+  adminOpenClosedWaiter: null,
+  analyticsFrom: null,
+  analyticsTo: null,
+};
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function showInputModal({ title, placeholder = "", initial = "", okLabel = "Guardar", cancelLabel = "Cancelar", allowEmpty = false, inputType = "text" }, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h4>${title}</h4>
+      <input type="${inputType}" id="modalInput" placeholder="${placeholder}" value="${initial}">
+      <div class="modal-actions">
+        <button class="secondary-btn" id="modalCancel">${cancelLabel}</button>
+        <button class="primary-btn" id="modalOk">${okLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector("#modalInput");
+  input.focus();
+  const close = () => document.body.contains(overlay) && document.body.removeChild(overlay);
+  overlay.querySelector("#modalCancel").onclick = close;
+  overlay.querySelector("#modalOk").onclick = () => {
+    const val = input.value.trim();
+    if (!val && !allowEmpty) { input.focus(); return; }
+    close();
+    onConfirm(val);
+  };
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") overlay.querySelector("#modalOk").click();
+    if (e.key === "Escape") close();
+  };
+}
+
+function showConfirmModal({ title, message, okLabel = "Confirmar", cancelLabel = "Cancelar", danger = false }, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h4>${title}</h4>
+      <div style="color:var(--text-dim); font-size:14px; margin-bottom:16px; line-height:1.4;">${message}</div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="modalCancel">${cancelLabel}</button>
+        <button class="${danger ? "danger-btn" : "primary-btn"}" id="modalOk">${okLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => document.body.contains(overlay) && document.body.removeChild(overlay);
+  overlay.querySelector("#modalCancel").onclick = close;
+  overlay.querySelector("#modalOk").onclick = () => { close(); onConfirm(); };
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+/* ---------------- CONEXIÓN AL SERVIDOR (API + WebSocket en tiempo real) ---------------- */
+
+async function apiCall(method, path, body) {
+  try {
+    const res = await fetch(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, status: res.status, error: err.error || "error" };
+    }
+    return { ok: true, data: await res.json() };
+  } catch (e) {
+    return { ok: false, status: 0, error: "sin conexión" };
+  }
+}
+
+function applyServerState(newState) {
+  if (!newState) return;
+  waitersState = newState.waiters;
+  tabsState = newState.tabs;
+  pricesState = newState.prices || {};
+  shiftState = newState.shift || null;
+  ingredientsState = newState.ingredients || {};
+  recipesState = newState.recipes || {};
+  litroCupIngredientId = newState.litroCupIngredientId || null;
+  saveLocal("gallo_waiters_cache", waitersState);
+  saveLocal("gallo_tabs_cache", tabsState);
+  saveLocal("gallo_prices_cache", pricesState);
+  saveLocal("gallo_shift_cache", shiftState);
+  saveLocal("gallo_ingredients_cache", ingredientsState);
+  saveLocal("gallo_recipes_cache", recipesState);
+  saveLocal("gallo_litrocup_cache", litroCupIngredientId);
+  renderApp();
+}
+
+function isAdminUnlocked() {
+  return sessionStorage.getItem("gallo_admin_ok") === "1";
+}
+
+function getPrice(name, format) {
+  const key = format || "simple";
+  const p = pricesState[name] && pricesState[name][key];
+  return typeof p === "number" ? p : 0;
+}
+
+function formatMoney(n) {
+  return "$" + Number(n || 0).toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function setPrice(name, format, price) {
+  const key = format || "simple";
+  pricesState = { ...pricesState, [name]: { ...(pricesState[name] || {}), [key]: price } };
+  saveLocal("gallo_prices_cache", pricesState);
+  renderApp();
+  apiCall("POST", "/api/prices/set", { name, format, price }).then((res) => {
+    if (!res.ok) toast("No se pudo guardar el precio — revisa la conexión");
+  });
+}
+
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  let ws;
+  try {
+    ws = new WebSocket(proto + "//" + location.host + "/ws");
+  } catch (e) {
+    syncStatus = "offline"; renderApp();
+    return;
+  }
+  wsConn = ws;
+  ws.onopen = () => { syncStatus = "synced"; renderApp(); };
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "state") applyServerState(msg.state);
+    } catch (e) {}
+  };
+  ws.onclose = () => {
+    syncStatus = "offline";
+    renderApp();
+    setTimeout(connectWS, 2500); // reintenta solo
+  };
+  ws.onerror = () => {};
+}
+
+async function initConnection() {
+  const res = await apiCall("GET", "/api/state");
+  if (res.ok) {
+    applyServerState(res.data);
+    syncStatus = "synced";
+  } else {
+    syncStatus = "offline";
+  }
+  renderApp();
+  connectWS();
+}
+
+/* ---------------- ACCIONES: siempre contra el servidor ---------------- */
+
+function enterAdmin() {
+  if (sessionStorage.getItem("gallo_admin_ok") === "1") {
+    return proceedToAdmin();
+  }
+  showInputModal({ title: "Acceso administrador", placeholder: "Contraseña", okLabel: "Entrar", inputType: "password" }, (pass) => {
+    apiCall("POST", "/api/admin/verify", { password: pass }).then((res) => {
+      if (!res.ok) { toast("Contraseña incorrecta"); return; }
+      sessionStorage.setItem("gallo_admin_ok", "1");
+      proceedToAdmin();
+    });
+  });
+}
+
+function proceedToAdmin() {
+  if (!shiftState) {
+    showInputModal({
+      title: "Abrir turno",
+      placeholder: "Fondo de caja inicial",
+      okLabel: "Abrir turno",
+      inputType: "number",
+    }, (val) => {
+      const num = Number(val);
+      if (isNaN(num) || num < 0) { toast("Cantidad inválida"); return; }
+      apiCall("POST", "/api/shift/open", { startingCash: num }).then((res) => {
+        if (!res.ok) { toast("No se pudo abrir el turno — revisa la conexión"); return; }
+        shiftState = res.data.state.shift;
+        saveLocal("gallo_shift_cache", shiftState);
+        session.screen = "admin";
+        renderApp();
+      });
+    });
+  } else {
+    session.screen = "admin";
+    renderApp();
+  }
+}
+
+function claimName(name) {
+  apiCall("POST", "/api/waiters/claim", { name }).then((res) => {
+    if (!res.ok) {
+      if (res.status === 409) toast(name + " ya está ocupado");
+      else toast("No se pudo conectar al servidor");
+      return;
+    }
+    waitersState = { ...waitersState, claimedBy: { ...waitersState.claimedBy, [name]: true } };
+    saveLocal("gallo_waiters_cache", waitersState);
+    session.myName = name;
+    localStorage.setItem("gallo_my_name", name);
+    session.screen = "home";
+    renderApp();
+  });
+}
+
+function releaseWaiterName(name) {
+  apiCall("POST", "/api/waiters/release", { name }).then((res) => {
+    if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+    const updated = { ...waitersState.claimedBy };
+    delete updated[name];
+    waitersState = { ...waitersState, claimedBy: updated };
+    saveLocal("gallo_waiters_cache", waitersState);
+    toast(name + " liberado");
+    renderApp();
+  });
+}
+
+function releaseAllWaiters() {
+  apiCall("POST", "/api/waiters/release-all").then((res) => {
+    if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+    waitersState = { ...waitersState, claimedBy: {} };
+    saveLocal("gallo_waiters_cache", waitersState);
+    localStorage.removeItem("gallo_my_name");
+    session.myName = null;
+    session.screen = "login";
+    toast("Turno cerrado — nombres liberados");
+    renderApp();
+  });
+}
+
+function closeShift() {
+  apiCall("POST", "/api/shift/close").then((res) => {
+    if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+    waitersState = { ...waitersState, claimedBy: {} };
+    shiftState = null;
+    saveLocal("gallo_waiters_cache", waitersState);
+    saveLocal("gallo_shift_cache", shiftState);
+    localStorage.removeItem("gallo_my_name");
+    session.myName = null;
+    session.screen = "login";
+    toast("Turno cerrado");
+    renderApp();
+  });
+}
+
+function addCashMovement(type) {
+  showInputModal({
+    title: type === "entrada" ? "Entrada de efectivo" : "Salida de efectivo",
+    placeholder: "Concepto (ej. cambio de caja, pago a grupo)",
+    okLabel: "Continuar",
+  }, (concept) => {
+    showInputModal({
+      title: "Monto",
+      placeholder: "Cantidad en pesos",
+      okLabel: "Guardar",
+      inputType: "number",
+    }, (val) => {
+      const num = Number(val);
+      if (isNaN(num) || num <= 0) { toast("Monto inválido"); return; }
+      apiCall("POST", "/api/shift/movement", { type, amount: num, concept }).then((res) => {
+        if (!res.ok) { toast("No se pudo guardar — revisa la conexión"); return; }
+        shiftState = res.data.state.shift;
+        saveLocal("gallo_shift_cache", shiftState);
+        toast((type === "entrada" ? "Entrada" : "Salida") + " registrada");
+        renderApp();
+      });
+    });
+  });
+}
+
+function addIngredient() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h4>Nuevo ingrediente</h4>
+      <input type="text" id="ingNameInput" placeholder="Nombre (ej. Jugo de limón)" style="width:100%; background:var(--card); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:12px; font-size:15px; margin-bottom:12px;">
+      <label style="font-size:11px; color:var(--text-faint); display:block; margin-bottom:6px;">Unidad</label>
+      <div class="format-row" id="unitChips" style="margin-bottom:16px;"></div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="ingCancel">Cancelar</button>
+        <button class="primary-btn" id="ingSave">Agregar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  let unit = "oz";
+  const chipsWrap = overlay.querySelector("#unitChips");
+  ["oz", "ml", "pieza"].forEach(u => {
+    const chip = document.createElement("div");
+    chip.className = "format-chip" + (u === unit ? " has-qty" : "");
+    chip.textContent = u;
+    chip.onclick = () => { unit = u; overlay.querySelectorAll(".format-chip").forEach(c => c.classList.remove("has-qty")); chip.classList.add("has-qty"); };
+    chipsWrap.appendChild(chip);
+  });
+  const close = () => document.body.contains(overlay) && document.body.removeChild(overlay);
+  overlay.querySelector("#ingCancel").onclick = close;
+  overlay.querySelector("#ingSave").onclick = () => {
+    const name = overlay.querySelector("#ingNameInput").value.trim();
+    if (!name) { toast("Escribe un nombre"); return; }
+    apiCall("POST", "/api/ingredients/add", { name, unit }).then((res) => {
+      if (!res.ok) { toast(res.status === 409 ? "Ya existe ese ingrediente" : "No se pudo agregar"); return; }
+      ingredientsState = res.data.state.ingredients;
+      saveLocal("gallo_ingredients_cache", ingredientsState);
+      close();
+      renderApp();
+    });
+  };
+}
+
+function restockIngredient(id, name, unit) {
+  showInputModal({
+    title: "Recibir stock — " + name,
+    placeholder: `Cantidad recibida (${unit})`,
+    okLabel: "Agregar",
+    inputType: "number",
+  }, (val) => {
+    const num = Number(val);
+    if (isNaN(num) || num <= 0) { toast("Cantidad inválida"); return; }
+    apiCall("POST", "/api/ingredients/" + id + "/restock", { amount: num }).then((res) => {
+      if (!res.ok) { toast("No se pudo guardar"); return; }
+      ingredientsState = res.data.state.ingredients;
+      saveLocal("gallo_ingredients_cache", ingredientsState);
+      toast("Stock actualizado");
+      renderApp();
+    });
+  });
+}
+
+function removeIngredient(id, name) {
+  showConfirmModal({
+    title: "Eliminar ingrediente",
+    message: `¿Eliminar "${name}"? Esto también lo quita de cualquier receta donde se use.`,
+    okLabel: "Eliminar",
+    danger: true,
+  }, () => {
+    apiCall("POST", "/api/ingredients/" + id + "/remove").then((res) => {
+      if (!res.ok) { toast("No se pudo eliminar"); return; }
+      ingredientsState = res.data.state.ingredients;
+      recipesState = res.data.state.recipes;
+      litroCupIngredientId = res.data.state.litroCupIngredientId;
+      saveLocal("gallo_ingredients_cache", ingredientsState);
+      saveLocal("gallo_recipes_cache", recipesState);
+      saveLocal("gallo_litrocup_cache", litroCupIngredientId);
+      toast(name + " eliminado");
+      renderApp();
+    });
+  });
+}
+
+function setLitroCup(id) {
+  const isCurrently = litroCupIngredientId === id;
+  apiCall("POST", "/api/ingredients/" + id + "/set-litro-cup", { value: !isCurrently }).then((res) => {
+    if (!res.ok) { toast("No se pudo actualizar"); return; }
+    litroCupIngredientId = res.data.state.litroCupIngredientId;
+    saveLocal("gallo_litrocup_cache", litroCupIngredientId);
+    toast(isCurrently ? "Ya no se descuenta como vaso de litro" : "Ahora se descuenta 1 automático por cada litro vendido");
+    renderApp();
+  });
+}
+
+function openRecipeEditor(productKey, productLabel) {
+  const overlay = document.createElement("div");
+  overlay.className = "sheet-overlay open";
+  const existing = (recipesState[productKey] || []).map(r => ({ ...r }));
+  const ingredientList = Object.entries(ingredientsState).map(([id, ing]) => ({ id, ...ing }));
+  const productName = productKey.split("|")[0];
+
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Receta — ${productLabel}</h3>
+        <div class="icon-btn" id="closeRecipe">✕</div>
+      </div>
+      <div class="sheet-body" id="recipeRows"></div>
+      <div class="sheet-foot">
+        <button class="secondary-btn" id="quickLinkBtn">📦 Es un producto simple — contar 1 por venta (ej. cerveza)</button>
+        <button class="secondary-btn" id="addRecipeRow" style="margin-top:8px;">+ Agregar ingrediente</button>
+        <button class="primary-btn" id="saveRecipe" style="margin-top:8px;">Guardar receta</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const rowsWrap = overlay.querySelector("#recipeRows");
+
+  overlay.querySelector("#quickLinkBtn").onclick = () => {
+    const matchIng = Object.entries(ingredientsState).find(([, ing]) => ing.name.toLowerCase() === productName.toLowerCase());
+    const wireUp = (ingredientId) => {
+      apiCall("POST", "/api/recipes/set", { productKey, ingredients: [{ ingredientId, qty: 1 }] }).then((res) => {
+        if (!res.ok) { toast("No se pudo guardar"); return; }
+        recipesState = res.data.state.recipes;
+        saveLocal("gallo_recipes_cache", recipesState);
+        toast(productName + " ahora descuenta 1 unidad por venta");
+        document.body.contains(overlay) && document.body.removeChild(overlay);
+        renderApp();
+      });
+    };
+    if (matchIng) {
+      wireUp(matchIng[0]);
+    } else {
+      apiCall("POST", "/api/ingredients/add", { name: productName, unit: "pieza" }).then((res) => {
+        if (!res.ok) { toast("No se pudo crear el ingrediente"); return; }
+        ingredientsState = res.data.state.ingredients;
+        saveLocal("gallo_ingredients_cache", ingredientsState);
+        wireUp(res.data.id);
+      });
+    }
+  };
+
+  if (ingredientList.length === 0) {
+    rowsWrap.innerHTML = `<div class="empty-note">Todavía no tienes ingredientes en tu catálogo. Cierra esto y agrega ingredientes primero desde "Inventario".</div>`;
+  }
+
+  function renderRows() {
+    rowsWrap.innerHTML = "";
+    if (existing.length === 0 && ingredientList.length > 0) {
+      rowsWrap.innerHTML = `<div class="empty-note">Sin ingredientes en esta receta todavía.</div>`;
+    }
+    existing.forEach((r, idx) => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex; gap:8px; align-items:center; margin-bottom:10px;";
+      const options = ingredientList.map(ing => `<option value="${ing.id}" ${ing.id === r.ingredientId ? "selected" : ""}>${ing.name} (${ing.unit})</option>`).join("");
+      row.innerHTML = `
+        <select style="flex:1; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:13px;">${options}</select>
+        <input type="number" value="${r.qty}" style="width:80px; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:13px;">
+        <button class="remove-btn">quitar</button>
+      `;
+      row.querySelector("select").onchange = (e) => { existing[idx].ingredientId = e.target.value; };
+      row.querySelector("input").oninput = (e) => { existing[idx].qty = Number(e.target.value) || 0; };
+      row.querySelector(".remove-btn").onclick = () => { existing.splice(idx, 1); renderRows(); };
+      rowsWrap.appendChild(row);
+    });
+  }
+  renderRows();
+
+  overlay.querySelector("#addRecipeRow").onclick = () => {
+    if (ingredientList.length === 0) { toast("Agrega ingredientes primero"); return; }
+    existing.push({ ingredientId: ingredientList[0].id, qty: 1 });
+    renderRows();
+  };
+  overlay.querySelector("#closeRecipe").onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector("#saveRecipe").onclick = () => {
+    const clean = existing.filter(r => r.ingredientId && r.qty > 0);
+    apiCall("POST", "/api/recipes/set", { productKey, ingredients: clean }).then((res) => {
+      if (!res.ok) { toast("No se pudo guardar la receta"); return; }
+      recipesState = res.data.state.recipes;
+      saveLocal("gallo_recipes_cache", recipesState);
+      toast("Receta guardada");
+      document.body.contains(overlay) && document.body.removeChild(overlay);
+      renderApp();
+    });
+  };
+}
+
+function addWaiterName() {
+  showInputModal({ title: "Nuevo mesero", placeholder: "Nombre del mesero", okLabel: "Agregar" }, (clean) => {
+    apiCall("POST", "/api/waiters/add", { name: clean }).then((res) => {
+      if (!res.ok) { toast(res.status === 409 ? "Ese nombre ya existe" : "No se pudo conectar al servidor"); return; }
+      waitersState = { ...waitersState, names: [...waitersState.names, clean] };
+      saveLocal("gallo_waiters_cache", waitersState);
+      renderApp();
+    });
+  });
+}
+
+function removeWaiterName(name) {
+  showConfirmModal({
+    title: "Eliminar mesero",
+    message: `¿Eliminar a "${name}" de la lista por completo? Esto no se puede deshacer — si solo no llegó hoy, mejor usa "liberar" en vez de eliminar.`,
+    okLabel: "Sí, eliminar",
+    danger: true,
+  }, () => {
+    apiCall("POST", "/api/waiters/remove", { name }).then((res) => {
+      if (!res.ok) { toast("No se pudo conectar al servidor"); return; }
+      waitersState = {
+        ...waitersState,
+        names: waitersState.names.filter((n) => n !== name),
+        claimedBy: Object.fromEntries(Object.entries(waitersState.claimedBy).filter(([n]) => n !== name)),
+      };
+      saveLocal("gallo_waiters_cache", waitersState);
+      toast(name + " eliminado");
+      renderApp();
+    });
+  });
+}
+
+function createTab(assignedWaiter) {
+  showInputModal({ title: "Nueva cuenta", placeholder: "Ej. Mesa 5, Barra, Juan...", okLabel: "Crear cuenta", allowEmpty: true }, (table) => {
+    apiCall("POST", "/api/tabs", { waiter: assignedWaiter, table }).then((res) => {
+      if (!res.ok) { toast("No se pudo crear la cuenta — revisa la conexión"); return; }
+      tabsState = [...tabsState, res.data.tab];
+      saveLocal("gallo_tabs_cache", tabsState);
+      session.activeTabId = res.data.tab.id;
+      session.screen = "menu";
+      session.openCategory = null;
+      renderApp();
+    });
+  });
+}
+
+function updateTabItems(tabId, items) {
+  // Optimista: refleja el cambio de inmediato en pantalla mientras se confirma con el servidor
+  const idx = tabsState.findIndex(t => t.id === tabId);
+  if (idx >= 0) tabsState[idx] = { ...tabsState[idx], items };
+  saveLocal("gallo_tabs_cache", tabsState);
+  renderApp();
+  apiCall("PATCH", "/api/tabs/" + tabId + "/items", { items }).then((res) => {
+    if (!res.ok) toast("No se pudo guardar — revisa la conexión");
+  });
+}
+
+function closeTab(tabId) {
+  apiCall("PATCH", "/api/tabs/" + tabId + "/status", { status: "closed" }).then((res) => {
+    if (!res.ok) { toast("No se pudo cerrar la cuenta — revisa la conexión"); return; }
+    if (res.data && res.data.state) {
+      tabsState = res.data.state.tabs;
+    } else {
+      const idx = tabsState.findIndex(t => t.id === tabId);
+      if (idx >= 0) tabsState[idx] = { ...tabsState[idx], status: "closed", closedAt: new Date().toISOString() };
+    }
+    saveLocal("gallo_tabs_cache", tabsState);
+    toast("Cuenta cerrada");
+    session.screen = session.myName ? "home" : "admin";
+    session.activeTabId = null;
+    renderApp();
+  });
+}
+
+function checkoutTab(tabId, payments, cardTip, onDone) {
+  apiCall("POST", "/api/tabs/" + tabId + "/checkout", { payments, cardTip }).then((res) => {
+    if (!res.ok) { toast("No se pudo cobrar la cuenta — revisa la conexión"); return; }
+    if (res.data && res.data.state) {
+      tabsState = res.data.state.tabs;
+    } else {
+      const idx = tabsState.findIndex(t => t.id === tabId);
+      if (idx >= 0) tabsState[idx] = { ...tabsState[idx], status: "closed", payments, cardTip, closedAt: new Date().toISOString() };
+    }
+    saveLocal("gallo_tabs_cache", tabsState);
+    toast("Cuenta cobrada ✓");
+    session.screen = session.myName ? "home" : "admin";
+    session.activeTabId = null;
+    renderApp();
+    if (onDone) onDone();
+  });
+}
+
+/* ---------------- RENDER ---------------- */
+
+function renderApp() {
+  const app = document.getElementById("app");
+  if (session.screen === "login") return renderLogin(app);
+  if (session.screen === "home") return renderHome(app);
+  if (session.screen === "menu") return renderMenu(app);
+  if (session.screen === "admin") return renderAdmin(app);
+  if (session.screen === "prices") return renderPrices(app);
+  if (session.screen === "shiftReport") return renderShiftReport(app);
+  if (session.screen === "inventory") return renderInventory(app);
+  if (session.screen === "analytics") return renderAnalytics(app);
+}
+
+function syncBadge() {
+  const map = {
+    connecting: { text: "Conectando al servidor…", color: "var(--gold)" },
+    synced: { text: "● Conectado — sincronizado en vivo", color: "var(--green)" },
+    offline: { text: "Sin conexión al servidor — reintentando…", color: "var(--red-bright)" },
+  };
+  const s = map[syncStatus] || map.connecting;
+  return `<div style="text-align:center; font-size:11px; color:${s.color}; margin-top:14px;">${s.text}</div>`;
+}
+
+function renderLogin(app) {
+  const names = waitersState.names;
+  app.innerHTML = `
+    <div class="content" style="padding-bottom:40px;">
+      <div class="login-hero">
+        <div class="rooster">🐓</div>
+        <div class="brand">GALLO</div>
+        <div class="tag">Restaurant · Sport · Bar</div>
+      </div>
+      <div class="section-title" style="text-align:center;">Elige tu nombre</div>
+      <div class="name-grid" id="nameGrid"></div>
+      <div class="admin-link" id="adminLink">Entrar como administrador</div>
+      ${syncBadge()}
+    </div>
+  `;
+  const grid = document.getElementById("nameGrid");
+  names.forEach(name => {
+    const taken = !!waitersState.claimedBy[name];
+    const btn = document.createElement("div");
+    btn.className = "name-btn" + (taken ? " taken" : "");
+    btn.innerHTML = name + (taken ? '<span class="who">ocupado</span>' : "");
+    if (!taken) {
+      btn.onclick = () => claimName(name);
+    } else {
+      btn.onclick = () => toast("Ese nombre está ocupado — si es un error, pide al administrador que lo libere.");
+    }
+    grid.appendChild(btn);
+  });
+  document.getElementById("adminLink").onclick = enterAdmin;
+}
+
+function renderHome(app) {
+  const myTabs = tabsState.filter(t => t.waiter === session.myName && t.status === "open");
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Mesero: ${session.myName}</div>
+      </div>
+      <div class="icon-btn" id="logoutBtn" title="Salir">⎋</div>
+    </div>
+    <div class="content">
+      <div class="section-title">Mis cuentas abiertas</div>
+      <div id="tabList"></div>
+      <button class="new-tab-btn" id="newTabBtn">+ Nueva cuenta</button>
+    </div>
+  `;
+  const list = document.getElementById("tabList");
+  if (myTabs.length === 0) {
+    list.innerHTML = `<div class="empty-note">No tienes cuentas abiertas todavía.</div>`;
+  } else {
+    myTabs.forEach(t => {
+      const count = (t.items || []).reduce((s, i) => s + i.qty, 0);
+      const div = document.createElement("div");
+      div.className = "tab-card";
+      div.innerHTML = `
+        <div>
+          <div class="tname">${t.table ? t.table : "Cuenta sin nombre"}</div>
+          <div class="tmeta">${(t.items || []).length} producto(s)</div>
+        </div>
+        <div class="tcount">${count}</div>
+      `;
+      div.onclick = () => { session.activeTabId = t.id; session.screen = "menu"; session.openCategory = null; renderApp(); };
+      list.appendChild(div);
+    });
+  }
+  document.getElementById("newTabBtn").onclick = () => createTab(session.myName);
+  document.getElementById("logoutBtn").onclick = () => { session.screen = "login"; renderApp(); };
+}
+
+function findTab(id) { return tabsState.find(t => t.id === id); }
+
+function renderMenu(app) {
+  const tab = findTab(session.activeTabId);
+  if (!tab) { session.screen = session.myName ? "home" : "admin"; return renderApp(); }
+  const items = tab.items || [];
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="icon-btn" id="backBtn">←</div>
+      <div style="text-align:right;">
+        <h1 class="brand" style="font-size:16px;">${tab.table || "Cuenta"}</h1>
+        <div class="sub">${tab.waiter}</div>
+      </div>
+    </div>
+    <div class="content" id="menuContent"></div>
+    <div class="cart-bar" id="cartBar">
+      <span>${totalQty} producto(s) en la cuenta</span>
+      <span class="cta">Ver cuenta →</span>
+    </div>
+  `;
+  document.getElementById("backBtn").onclick = () => {
+    session.screen = session.myName ? "home" : "admin";
+    session.activeTabId = null;
+    renderApp();
+  };
+  document.getElementById("cartBar").onclick = () => openCartSheet(tab);
+
+  const menuContent = document.getElementById("menuContent");
+  MENU.forEach(cat => {
+    const catEl = document.createElement("div");
+    catEl.className = "category";
+    const isOpen = session.openCategory === cat.cat;
+    catEl.innerHTML = `
+      <div class="category-head ${isOpen ? "open" : ""}">
+        <span>${cat.cat}</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isOpen ? "open" : ""}"></div>
+    `;
+    catEl.querySelector(".category-head").onclick = () => {
+      session.openCategory = isOpen ? null : cat.cat;
+      renderApp();
+    };
+    const body = catEl.querySelector(".category-body");
+    if (isOpen) {
+      const productItems = cat.simple
+        ? cat.items.map(n => ({ n, f: [] }))
+        : cat.items;
+
+      // sort most-ordered-first within this tab's own current order as a simple proxy
+      const sorted = [...productItems].sort((a, b) => {
+        const qa = items.filter(i => i.name === a.n).reduce((s,i)=>s+i.qty,0);
+        const qb = items.filter(i => i.name === b.n).reduce((s,i)=>s+i.qty,0);
+        return qb - qa;
+      });
+
+      sorted.forEach(p => {
+        body.appendChild(renderProductRow(tab, p));
+      });
+    }
+    menuContent.appendChild(catEl);
+  });
+}
+
+function renderProductRow(tab, product) {
+  const items = tab.items || [];
+  const row = document.createElement("div");
+  row.className = "product-row";
+
+  if (!product.f || product.f.length === 0) {
+    // simple product, single format
+    const existing = items.find(i => i.name === product.n && !i.format);
+    const qty = existing ? existing.qty : 0;
+    row.innerHTML = `
+      <div class="product-main">
+        <div class="product-name">${product.n}</div>
+        <div class="qty-stepper">
+          <button class="minus">−</button>
+          <span class="qn">${qty}</span>
+          <button class="plus">+</button>
+        </div>
+      </div>
+      <input class="note-input" placeholder="Nota (opcional)" style="${qty > 0 ? '' : 'display:none;'}" value="${existing ? (existing.note || "") : ""}">
+    `;
+    const noteInput = row.querySelector(".note-input");
+    row.querySelector(".plus").onclick = () => changeQty(tab, product.n, null, +1);
+    row.querySelector(".minus").onclick = () => changeQty(tab, product.n, null, -1);
+    noteInput.onchange = (e) => setNote(tab, product.n, null, e.target.value);
+  } else {
+    // formats: copeo / litro / botella — separate line items
+    row.innerHTML = `<div class="product-name" style="margin-bottom:4px;">${product.n}</div><div class="format-row"></div>`;
+    const fr = row.querySelector(".format-row");
+    product.f.forEach(fmt => {
+      const existing = items.find(i => i.name === product.n && i.format === fmt);
+      const qty = existing ? existing.qty : 0;
+      const chip = document.createElement("div");
+      chip.className = "format-chip" + (qty > 0 ? " has-qty" : "");
+      if (qty > 0) {
+        chip.innerHTML = `
+          <div class="fq-label">${fmt}</div>
+          <div class="fq-stepper">
+            <button class="fq-minus">−</button>
+            <span class="fq">${qty}</span>
+            <button class="fq-plus">+</button>
+          </div>
+        `;
+        chip.querySelector(".fq-minus").onclick = (e) => { e.stopPropagation(); changeQty(tab, product.n, fmt, -1); };
+        chip.querySelector(".fq-plus").onclick = (e) => { e.stopPropagation(); changeQty(tab, product.n, fmt, +1); };
+      } else {
+        chip.innerHTML = fmt;
+        chip.onclick = () => changeQty(tab, product.n, fmt, +1);
+      }
+      fr.appendChild(chip);
+    });
+    const anyQty = product.f.some(fmt => items.find(i => i.name === product.n && i.format === fmt && i.qty > 0));
+    if (anyQty) {
+      const noteInput = document.createElement("input");
+      noteInput.className = "note-input";
+      noteInput.placeholder = "Nota (opcional, aplica a este producto)";
+      const anyItem = items.find(i => i.name === product.n && i.qty > 0);
+      noteInput.value = anyItem ? (anyItem.note || "") : "";
+      noteInput.onchange = (e) => {
+        items.filter(i => i.name === product.n).forEach(i => i.note = e.target.value);
+        updateTabItems(tab.id, items);
+      };
+      row.appendChild(noteInput);
+    }
+  }
+  return row;
+}
+
+function changeQty(tab, name, format, delta) {
+  let items = [...(tab.items || [])];
+  let idx = items.findIndex(i => i.name === name && (format ? i.format === format : !i.format));
+  if (idx === -1 && delta > 0) {
+    items.push({ id: uid(), name, format: format || null, qty: 1, note: "", category: null, price: getPrice(name, format) });
+  } else if (idx >= 0) {
+    const newQty = items[idx].qty + delta;
+    if (newQty <= 0) {
+      items.splice(idx, 1);
+    } else {
+      items[idx] = { ...items[idx], qty: newQty };
+    }
+  }
+  updateTabItems(tab.id, items);
+}
+
+function setNote(tab, name, format, note) {
+  let items = [...(tab.items || [])];
+  const idx = items.findIndex(i => i.name === name && (format ? i.format === format : !i.format));
+  if (idx >= 0) {
+    items[idx] = { ...items[idx], note };
+    updateTabItems(tab.id, items);
+  }
+}
+
+function openCartSheet(tab) {
+  const overlay = document.createElement("div");
+  overlay.className = "sheet-overlay open";
+  const items = tab.items || [];
+  const admin = isAdminUnlocked();
+  const total = items.reduce((s, it) => s + (typeof it.price === "number" ? it.price : getPrice(it.name, it.format)) * it.qty, 0);
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>${tab.table || "Cuenta"}</h3>
+        <div class="icon-btn" id="closeSheet">✕</div>
+      </div>
+      <div class="sheet-body" id="sheetBody"></div>
+      <div class="sheet-foot">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-weight:800; font-size:17px;">
+          <span style="color:var(--text-dim); font-weight:600; font-size:14px;">Total</span>
+          <span style="color:var(--gold-bright);">${formatMoney(total)}</span>
+        </div>
+        <button class="primary-btn" id="confirmOrder">Confirmar y enviar</button>
+        <button class="danger-btn" id="closeTabBtn">Cobrar y cerrar cuenta</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const body = overlay.querySelector("#sheetBody");
+  if (items.length === 0) {
+    body.innerHTML = `<div class="empty-note">Todavía no has agregado productos.</div>`;
+  } else {
+    items.forEach(it => {
+      const price = typeof it.price === "number" ? it.price : getPrice(it.name, it.format);
+      const line = document.createElement("div");
+      line.className = "item-line";
+      line.innerHTML = `
+        <div>
+          <div class="iname">${it.qty}× ${it.name}${it.format ? ` <span class="ifmt">(${it.format})</span>` : ""}</div>
+          <div class="ifmt">${formatMoney(price)} c/u — subtotal ${formatMoney(price * it.qty)}</div>
+          ${it.note ? `<div class="inote">${it.note}</div>` : ""}
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <button class="remove-btn">quitar</button>
+          ${admin ? `<button class="remove-btn" style="color:var(--gold-bright);">editar precio</button>` : ""}
+        </div>
+      `;
+      const buttons = line.querySelectorAll(".remove-btn");
+      buttons[0].onclick = () => {
+        const newItems = items.filter(i => i.id !== it.id);
+        updateTabItems(tab.id, newItems);
+        document.body.contains(overlay) && document.body.removeChild(overlay);
+      };
+      if (admin && buttons[1]) {
+        buttons[1].onclick = () => {
+          showInputModal({
+            title: "Editar precio — " + it.name + (it.format ? " (" + it.format + ")" : ""),
+            placeholder: "Precio para esta cuenta",
+            initial: String(price),
+            okLabel: "Guardar",
+            inputType: "number",
+          }, (val) => {
+            const num = Number(val);
+            if (isNaN(num) || num < 0) { toast("Precio inválido"); return; }
+            const newItems = items.map(i => i.id === it.id ? { ...i, price: num } : i);
+            updateTabItems(tab.id, newItems);
+            document.body.contains(overlay) && document.body.removeChild(overlay);
+          });
+        };
+      }
+      body.appendChild(line);
+    });
+  }
+  overlay.querySelector("#closeSheet").onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector("#confirmOrder").onclick = () => {
+    toast("Orden enviada ✓");
+    document.body.removeChild(overlay);
+  };
+  overlay.querySelector("#closeTabBtn").onclick = () => {
+    if (items.length === 0) { toast("Agrega al menos un producto antes de cobrar"); return; }
+    openCheckoutModal(tab, total, () => {
+      document.body.contains(overlay) && document.body.removeChild(overlay);
+    });
+  };
+}
+
+function openCheckoutModal(tab, total, onClosedParent) {
+  const overlay = document.createElement("div");
+  overlay.className = "sheet-overlay open";
+  const methods = [
+    { key: "cash", label: "Efectivo" },
+    { key: "card", label: "Tarjeta" },
+    { key: "transfer", label: "Transferencia" },
+  ];
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>Cobrar — ${tab.table || "Cuenta"}</h3>
+        <div class="icon-btn" id="closeCheckout">✕</div>
+      </div>
+      <div class="sheet-body" id="checkoutBody">
+        <div style="text-align:center; margin-bottom:18px;">
+          <div style="font-size:12px; color:var(--text-dim);">Total a cobrar</div>
+          <div style="font-size:28px; font-weight:800; color:var(--gold-bright);">${formatMoney(total)}</div>
+        </div>
+        <div id="methodRows"></div>
+        <div id="tipSection" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line);"></div>
+        <div id="balanceIndicator" style="margin-top:16px; text-align:center; font-weight:700; font-size:14px;"></div>
+      </div>
+      <div class="sheet-foot">
+        <button class="primary-btn" id="confirmCheckout">Confirmar cobro</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const amounts = { cash: 0, card: 0, transfer: 0 };
+  let tipPct = 0;
+  let tipCustom = null;
+
+  const methodRows = overlay.querySelector("#methodRows");
+  methods.forEach(m => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; align-items:center; gap:10px; margin-bottom:10px;";
+    row.innerHTML = `
+      <div style="flex:1; font-weight:600; font-size:14px;">${m.label}</div>
+      <input type="number" data-method="${m.key}" placeholder="0" style="width:110px; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:14px; text-align:right;">
+    `;
+    const input = row.querySelector("input");
+    input.oninput = () => {
+      amounts[m.key] = Number(input.value) || 0;
+      updateBalance();
+      updateTipSection();
+    };
+    methodRows.appendChild(row);
+  });
+
+  function updateTipSection() {
+    const tipSection = overlay.querySelector("#tipSection");
+    if (amounts.card > 0) {
+      const pcts = [0, 10, 15, 20];
+      const tipAmount = tipCustom !== null ? tipCustom : Math.round(amounts.card * tipPct / 100);
+      tipSection.style.display = "block";
+      tipSection.innerHTML = `
+        <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">Propina de tarjeta (va acumulada al mesero)</div>
+        <div class="format-row"></div>
+        <div style="text-align:right; margin-top:8px; font-weight:700; color:var(--gold-bright);">Propina: ${formatMoney(tipAmount)}</div>
+      `;
+      const fr = tipSection.querySelector(".format-row");
+      pcts.forEach(pct => {
+        const chip = document.createElement("div");
+        chip.className = "format-chip" + (tipCustom === null && tipPct === pct ? " has-qty" : "");
+        chip.textContent = pct + "%";
+        chip.onclick = () => { tipPct = pct; tipCustom = null; updateTipSection(); };
+        fr.appendChild(chip);
+      });
+    } else {
+      tipSection.style.display = "none";
+      tipCustom = null;
+      tipPct = 0;
+    }
+  }
+
+  function currentTipAmount() {
+    if (amounts.card <= 0) return 0;
+    return tipCustom !== null ? tipCustom : Math.round(amounts.card * tipPct / 100);
+  }
+
+  function updateBalance() {
+    const sum = amounts.cash + amounts.card + amounts.transfer;
+    const diff = total - sum;
+    const ind = overlay.querySelector("#balanceIndicator");
+    if (Math.abs(diff) < 0.01) {
+      ind.style.color = "var(--green)";
+      ind.textContent = "✓ Cuadra con el total";
+    } else if (diff > 0) {
+      ind.style.color = "var(--red-bright)";
+      ind.textContent = `Falta ${formatMoney(diff)}`;
+    } else {
+      ind.style.color = "var(--red-bright)";
+      ind.textContent = `Sobra ${formatMoney(-diff)}`;
+    }
+  }
+  updateBalance();
+
+  overlay.querySelector("#closeCheckout").onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector("#confirmCheckout").onclick = () => {
+    const sum = amounts.cash + amounts.card + amounts.transfer;
+    if (Math.abs(total - sum) >= 0.01) {
+      toast("El total dividido no coincide con el total de la cuenta");
+      return;
+    }
+    const payments = methods
+      .filter(m => amounts[m.key] > 0)
+      .map(m => ({ method: m.key, amount: amounts[m.key] }));
+    checkoutTab(tab.id, payments, currentTipAmount(), () => {
+      document.body.contains(overlay) && document.body.removeChild(overlay);
+      onClosedParent();
+    });
+  };
+}
+
+function renderAdminTabCard(t) {
+  const count = (t.items || []).reduce((s, i) => s + i.qty, 0);
+  const total = (t.items || []).reduce((s, i) => s + (typeof i.price === "number" ? i.price : getPrice(i.name, i.format)) * i.qty, 0);
+  const isOpen = session.adminOpenTab === t.id;
+  const isClosed = t.status === "closed";
+  const card = document.createElement("div");
+  card.className = "admin-tab";
+  card.style.marginBottom = "8px";
+  card.innerHTML = `
+    <div class="admin-tab-head">
+      <div>
+        <div class="tname">${t.table || "Cuenta sin nombre"}</div>
+        <div class="away">${count} producto(s) — ${formatMoney(total)}</div>
+      </div>
+      <div class="chev">${isOpen ? "▴" : "▾"}</div>
+    </div>
+    <div class="admin-items ${isOpen ? "open" : ""}" id="items-${t.id}"></div>
+  `;
+  card.querySelector(".admin-tab-head").onclick = () => {
+    session.adminOpenTab = isOpen ? null : t.id;
+    renderApp();
+  };
+  if (isOpen) {
+    const itemsWrap = card.querySelector(".admin-items");
+    (t.items || []).forEach(it => {
+      const price = typeof it.price === "number" ? it.price : getPrice(it.name, it.format);
+      const l = document.createElement("div");
+      l.className = "aline";
+      l.innerHTML = `<span><b>${it.qty}×</b> ${it.name}${it.format ? " (" + it.format + ")" : ""}${it.note ? " — " + it.note : ""} — ${formatMoney(price * it.qty)}</span>`;
+      itemsWrap.appendChild(l);
+    });
+    if (isClosed) {
+      const payWrap = document.createElement("div");
+      payWrap.style.cssText = "margin-top:10px; padding-top:10px; border-top:1px dashed var(--line);";
+      const methodLabels = { cash: "Efectivo", card: "Tarjeta", transfer: "Transferencia" };
+      const paymentsHtml = (t.payments || []).map(p => `<div class="aline"><span>${methodLabels[p.method] || p.method}</span><b>${formatMoney(p.amount)}</b></div>`).join("");
+      payWrap.innerHTML = `
+        <div class="aline" style="color:var(--gold-bright); font-weight:700;"><span>Total cobrado</span><span>${formatMoney(total)}</span></div>
+        ${paymentsHtml}
+        ${t.cardTip ? `<div class="aline"><span>Propina de tarjeta</span><span>${formatMoney(t.cardTip)}</span></div>` : ""}
+        ${t.closedAt ? `<div class="aline" style="color:var(--text-faint);"><span>Cerrada</span><span>${new Date(t.closedAt).toLocaleString("es-MX", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}</span></div>` : ""}
+      `;
+      itemsWrap.appendChild(payWrap);
+    } else {
+      const editBtn = document.createElement("button");
+      editBtn.className = "secondary-btn";
+      editBtn.textContent = "Abrir y editar esta cuenta";
+      editBtn.onclick = () => { session.activeTabId = t.id; session.screen = "menu"; session.openCategory = null; renderApp(); };
+      itemsWrap.appendChild(editBtn);
+    }
+  }
+  return card;
+}
+
+function renderAdmin(app) {
+  const openTabs = tabsState.filter(t => t.status === "open");
+  const closedTabs = tabsState.filter(t => t.status === "closed");
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Panel administrador</div>
+      </div>
+      <div class="icon-btn" id="backLogin">←</div>
+    </div>
+    <div class="content">
+      <button class="new-tab-btn" id="newAdminTab" style="margin-bottom:18px;">+ Nueva cuenta</button>
+      <button class="secondary-btn" id="pricesBtn" style="margin-bottom:8px; margin-top:0;">💲 Editar precios del menú</button>
+      <button class="secondary-btn" id="inventoryBtn" style="margin-bottom:8px; margin-top:0;">📦 Inventario y recetas</button>
+      <button class="secondary-btn" id="analyticsBtn" style="margin-bottom:18px; margin-top:0;">📊 Analítica</button>
+      <div class="section-title">Meseros (${waitersState.names.length})</div>
+      <div id="waiterMgmtList"></div>
+      <button class="secondary-btn" id="addWaiterBtn" style="margin-top:4px;">+ Agregar mesero</button>
+      <div class="section-title">Caja del turno</div>
+      <div class="tab-card" style="cursor:default;">
+        <div>
+          <div class="tname">Fondo de caja inicial</div>
+          <div class="tmeta">${shiftState ? "Turno abierto desde " + new Date(shiftState.openedAt).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : "Sin turno abierto"}</div>
+        </div>
+        <div class="tcount">${formatMoney(shiftState ? shiftState.startingCash : 0)}</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="secondary-btn" id="addEntradaBtn" style="margin-top:0;">+ Entrada de efectivo</button>
+        <button class="secondary-btn" id="addSalidaBtn" style="margin-top:0;">+ Salida de efectivo</button>
+      </div>
+      <button class="new-tab-btn" id="viewShiftReportBtn" style="margin-top:10px;">📋 Ver corte de turno</button>
+      <div class="section-title">Cuentas abiertas (${openTabs.length})</div>
+      <div id="openList"></div>
+      <div class="section-title">Cierre de turno</div>
+      <button class="danger-btn" id="shiftClose">Cerrar turno (libera meseros y reinicia caja)</button>
+      ${closedTabs.length ? `<div class="section-title">Cuentas cerradas hoy (${closedTabs.length})</div><div id="closedList"></div>` : ""}
+      ${syncBadge()}
+    </div>
+  `;
+  document.getElementById("backLogin").onclick = () => { session.screen = "login"; renderApp(); };
+  document.getElementById("addWaiterBtn").onclick = addWaiterName;
+  document.getElementById("pricesBtn").onclick = () => { session.screen = "prices"; session.openCategory = null; renderApp(); };
+  document.getElementById("inventoryBtn").onclick = () => { session.screen = "inventory"; session.openCategory = null; renderApp(); };
+  document.getElementById("analyticsBtn").onclick = () => { session.screen = "analytics"; renderApp(); };
+  document.getElementById("viewShiftReportBtn").onclick = () => { session.screen = "shiftReport"; renderApp(); };
+  document.getElementById("addEntradaBtn").onclick = () => addCashMovement("entrada");
+  document.getElementById("addSalidaBtn").onclick = () => addCashMovement("salida");
+  document.getElementById("newAdminTab").onclick = () => {
+    showInputModal({ title: "Nueva cuenta", placeholder: "¿A qué mesero se asigna? (vacío = tú)", okLabel: "Crear", allowEmpty: true }, (waiter) => {
+      createTab(waiter && waiter.trim() ? waiter.trim() : "Admin");
+    });
+  };
+  document.getElementById("shiftClose").onclick = () => {
+    showConfirmModal({
+      title: "Cerrar turno",
+      message: "Esto libera todos los nombres de meseros y reinicia la caja para el siguiente turno — el corte de este turno ya no se podrá ver después. ¿Continuar?",
+      okLabel: "Sí, cerrar turno",
+      danger: true
+    }, closeShift);
+  };
+
+  const waiterList = document.getElementById("waiterMgmtList");
+  waitersState.names.forEach(name => {
+    const taken = !!waitersState.claimedBy[name];
+    const row = document.createElement("div");
+    row.className = "tab-card";
+    row.style.cursor = "default";
+    row.innerHTML = `
+      <div>
+        <div class="tname">${name}</div>
+        <div class="tmeta">${taken ? "En turno ahorita" : "Libre"}</div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        ${taken ? `<button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 14px;" data-action="release">Liberar</button>` : ""}
+        <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 14px;" data-action="remove">Eliminar</button>
+      </div>
+    `;
+    const removeBtn = row.querySelector('[data-action="remove"]');
+    if (removeBtn) removeBtn.onclick = () => removeWaiterName(name);
+    const releaseBtn = row.querySelector('[data-action="release"]');
+    if (releaseBtn) releaseBtn.onclick = () => releaseWaiterName(name);
+    waiterList.appendChild(row);
+  });
+
+  const openList = document.getElementById("openList");
+  if (openTabs.length === 0) {
+    openList.innerHTML = `<div class="empty-note">No hay cuentas abiertas.</div>`;
+  }
+  const byWaiter = {};
+  openTabs.forEach(t => {
+    const key = t.waiter || "Sin asignar";
+    if (!byWaiter[key]) byWaiter[key] = [];
+    byWaiter[key].push(t);
+  });
+  Object.keys(byWaiter).forEach(waiterName => {
+    const waiterTabs = byWaiter[waiterName];
+    const totalCount = waiterTabs.reduce((s, t) => s + (t.items || []).reduce((s2, i) => s2 + i.qty, 0), 0);
+    const isWaiterOpen = session.adminOpenWaiter === waiterName;
+    const group = document.createElement("div");
+    group.className = "category";
+    group.innerHTML = `
+      <div class="category-head ${isWaiterOpen ? "open" : ""}">
+        <span>${waiterName} <span style="color:var(--text-faint); font-weight:400;">— ${waiterTabs.length} cuenta(s), ${totalCount} producto(s)</span></span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isWaiterOpen ? "open" : ""}" style="padding: 10px;"></div>
+    `;
+    group.querySelector(".category-head").onclick = () => {
+      session.adminOpenWaiter = isWaiterOpen ? null : waiterName;
+      renderApp();
+    };
+    if (isWaiterOpen) {
+      const body = group.querySelector(".category-body");
+      waiterTabs.forEach(t => body.appendChild(renderAdminTabCard(t)));
+    }
+    openList.appendChild(group);
+  });
+
+  if (closedTabs.length) {
+    const closedList = document.getElementById("closedList");
+    const closedByWaiter = {};
+    closedTabs.forEach(t => {
+      const key = t.waiter || "Sin asignar";
+      if (!closedByWaiter[key]) closedByWaiter[key] = [];
+      closedByWaiter[key].push(t);
+    });
+    Object.keys(closedByWaiter).forEach(waiterName => {
+      const waiterTabs = closedByWaiter[waiterName];
+      const totalSold = waiterTabs.reduce((s, t) => s + (t.items || []).reduce((s2, i) => s2 + (typeof i.price === "number" ? i.price : getPrice(i.name, i.format)) * i.qty, 0), 0);
+      const isWaiterOpen = session.adminOpenClosedWaiter === waiterName;
+      const group = document.createElement("div");
+      group.className = "category";
+      group.innerHTML = `
+        <div class="category-head ${isWaiterOpen ? "open" : ""}">
+          <span>${waiterName} <span style="color:var(--text-faint); font-weight:400;">— ${waiterTabs.length} cuenta(s), ${formatMoney(totalSold)}</span></span>
+          <span class="chev">▾</span>
+        </div>
+        <div class="category-body ${isWaiterOpen ? "open" : ""}" style="padding: 10px;"></div>
+      `;
+      group.querySelector(".category-head").onclick = () => {
+        session.adminOpenClosedWaiter = isWaiterOpen ? null : waiterName;
+        renderApp();
+      };
+      if (isWaiterOpen) {
+        const body = group.querySelector(".category-body");
+        waiterTabs.forEach(t => body.appendChild(renderAdminTabCard(t)));
+      }
+      closedList.appendChild(group);
+    });
+  }
+}
+
+function normalizeText(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildMenuLookup() {
+  // Lista plana de todos los (nombre, formato) válidos del menú, con su forma normalizada para buscar
+  const entries = [];
+  MENU.forEach(cat => {
+    if (cat.simple) {
+      cat.items.forEach(n => entries.push({ name: n, format: null, norm: normalizeText(n) }));
+    } else {
+      cat.items.forEach(p => {
+        const formats = (p.f && p.f.length) ? p.f : [null];
+        formats.forEach(fmt => entries.push({ name: p.n, format: fmt, norm: normalizeText(p.n) }));
+      });
+    }
+  });
+  return entries;
+}
+
+function parseBulkPrices(text) {
+  const lookup = buildMenuLookup();
+  const formatWords = ["copeo", "litro", "botella"];
+  const applied = [];
+  const notFound = [];
+  text.split("\n").forEach(rawLine => {
+    const line = rawLine.trim();
+    if (!line) return;
+    const m = line.match(/^(.+?)[:\-]?\s*\$?\s*(\d+(?:\.\d+)?)\s*$/);
+    if (!m) { notFound.push(line); return; }
+    const specRaw = m[1].replace(/[:\-]\s*$/, "").trim();
+    const price = Number(m[2]);
+    let norm = normalizeText(specRaw);
+    let wantedFormat = null;
+    for (const fw of formatWords) {
+      if (norm.endsWith(" " + fw)) { wantedFormat = fw; norm = norm.slice(0, -(fw.length + 1)).trim(); break; }
+    }
+    let candidates = lookup.filter(e => e.norm === norm);
+    if (candidates.length === 0) { notFound.push(line); return; }
+    if (wantedFormat) {
+      candidates = candidates.filter(e => e.format === wantedFormat);
+    } else if (candidates.length > 1) {
+      // sin formato especificado: prioriza la versión simple (ej. shot) sobre la versión con formatos
+      const simpleMatch = candidates.find(e => e.format === null);
+      candidates = simpleMatch ? [simpleMatch] : [candidates[0]];
+    }
+    if (candidates.length === 0) { notFound.push(line + " (formato no reconocido)"); return; }
+    const match = candidates[0];
+    applied.push({ name: match.name, format: match.format, price, line });
+  });
+  return { applied, notFound };
+}
+
+function renderPrices(app) {
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Precios del menú</div>
+      </div>
+      <div class="icon-btn" id="backAdmin">←</div>
+    </div>
+    <div class="content" id="pricesContent"></div>
+  `;
+  document.getElementById("backAdmin").onclick = () => { session.screen = "admin"; renderApp(); };
+
+  const content = document.getElementById("pricesContent");
+  content.innerHTML = `
+    <div class="category" style="padding:14px; margin-bottom:18px;">
+      <div style="font-weight:700; margin-bottom:6px; color:var(--gold-bright);">Pegar varios precios de un jalón</div>
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:10px; line-height:1.4;">
+        Escribe uno por línea: "Producto: precio". Para los que tienen copeo/litro/botella, agrega el formato: "Buchanans 12 litro: 240".
+      </div>
+      <textarea id="bulkPasteInput" placeholder="Don Julio: 130
+Perla Negra: 140
+Piña Colada copeo: 120
+Piña Colada litro: 240" style="width:100%; min-height:110px; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:13px; font-family:inherit; resize:vertical;"></textarea>
+      <button class="primary-btn" id="bulkPasteApply" style="margin-top:10px;">Aplicar estos precios</button>
+      <div id="bulkPasteResult" style="margin-top:10px; font-size:13px;"></div>
+    </div>
+    <div class="empty-note" style="padding:0 0 20px; text-align:left;">Los cambios aplican al menú general desde ahora. Las cuentas que ya tienen un producto agregado NO cambian — para eso usa "editar precio" dentro de esa cuenta.</div>
+  `;
+  document.getElementById("bulkPasteApply").onclick = () => {
+    const text = document.getElementById("bulkPasteInput").value;
+    const { applied, notFound } = parseBulkPrices(text);
+    applied.forEach(a => setPrice(a.name, a.format, a.price));
+    const resultEl = document.getElementById("bulkPasteResult");
+    let html = "";
+    if (applied.length) {
+      html += `<div style="color:var(--green); margin-bottom:6px;">✓ ${applied.length} aplicados: ` +
+        applied.map(a => a.name + (a.format ? ` (${a.format})` : "") + " → " + formatMoney(a.price)).join(", ") + `</div>`;
+    }
+    if (notFound.length) {
+      html += `<div style="color:var(--red-bright);">⚠ No reconocido, revisa la ortografía: ${notFound.join(" · ")}</div>`;
+    }
+    resultEl.innerHTML = html;
+    if (applied.length) document.getElementById("bulkPasteInput").value = "";
+  };
+
+  MENU.forEach(cat => {
+    const catEl = document.createElement("div");
+    catEl.className = "category";
+    const isOpen = session.openCategory === cat.cat;
+    catEl.innerHTML = `
+      <div class="category-head ${isOpen ? "open" : ""}">
+        <span>${cat.cat}</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isOpen ? "open" : ""}" style="padding: 10px 16px;"></div>
+    `;
+    catEl.querySelector(".category-head").onclick = () => {
+      session.openCategory = isOpen ? null : cat.cat;
+      renderApp();
+    };
+    if (isOpen) {
+      const body = catEl.querySelector(".category-body");
+      const productItems = cat.simple ? cat.items.map(n => ({ n, f: [] })) : cat.items;
+
+      if (cat.simple) {
+        const bulkRow = document.createElement("div");
+        bulkRow.style.cssText = "display:flex; gap:8px; align-items:flex-end; margin-bottom:16px; padding-bottom:14px; border-bottom:1px dashed var(--line);";
+        bulkRow.innerHTML = `
+          <div style="flex:1;">
+            <label style="font-size:11px; color:var(--text-faint); display:block; margin-bottom:4px;">Un precio para toda la categoría</label>
+            <input type="number" id="bulkPriceInput" placeholder="Ej. 60" style="width:100%; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:14px;">
+          </div>
+          <button class="primary-btn" id="bulkApplyBtn" style="width:auto; padding:10px 16px; margin-top:0;">Aplicar a los ${productItems.length}</button>
+        `;
+        bulkRow.querySelector("#bulkApplyBtn").onclick = () => {
+          const input = bulkRow.querySelector("#bulkPriceInput");
+          const num = Number(input.value);
+          if (input.value === "" || isNaN(num) || num < 0) { toast("Escribe un precio válido"); return; }
+          productItems.forEach(p => setPrice(p.n, null, num));
+          toast(`${productItems.length} productos actualizados a ${formatMoney(num)}`);
+        };
+        body.appendChild(bulkRow);
+      }
+
+      productItems.forEach(p => {
+        const row = document.createElement("div");
+        row.style.marginBottom = "14px";
+        const formats = (p.f && p.f.length) ? p.f : [null];
+        row.innerHTML = `
+          <div class="product-name" style="margin-bottom:6px;">${p.n}</div>
+          <div class="format-row" style="flex-wrap:wrap;"></div>
+        `;
+        const fr = row.querySelector(".format-row");
+        formats.forEach(fmt => {
+          const current = getPrice(p.n, fmt);
+          const field = document.createElement("div");
+          field.style.cssText = "display:flex; flex-direction:column; gap:4px; min-width:90px;";
+          field.innerHTML = `
+            <label style="font-size:11px; color:var(--text-faint);">${fmt || "precio"}</label>
+            <input type="number" value="${current || ""}" placeholder="0" style="background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:8px; font-size:14px; width:100%;">
+          `;
+          const input = field.querySelector("input");
+          input.onblur = () => {
+            const num = Number(input.value);
+            if (input.value !== "" && !isNaN(num) && num >= 0 && num !== current) {
+              setPrice(p.n, fmt, num);
+              toast(p.n + (fmt ? " (" + fmt + ")" : "") + " actualizado");
+            }
+          };
+          fr.appendChild(field);
+        });
+        body.appendChild(row);
+      });
+    }
+    content.appendChild(catEl);
+  });
+}
+
+function renderShiftReport(app) {
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Corte de turno</div>
+      </div>
+      <div class="icon-btn" id="backAdmin">←</div>
+    </div>
+    <div class="content" id="reportContent"></div>
+  `;
+  document.getElementById("backAdmin").onclick = () => { session.screen = "admin"; renderApp(); };
+
+  const content = document.getElementById("reportContent");
+  if (!shiftState) {
+    content.innerHTML = `<div class="empty-note">No hay un turno abierto ahorita.</div>`;
+    return;
+  }
+
+  const shiftStart = new Date(shiftState.openedAt).getTime();
+  const shiftTabs = tabsState.filter(t => t.status === "closed" && t.closedAt && new Date(t.closedAt).getTime() >= shiftStart);
+
+  const salesByMethod = { cash: 0, card: 0, transfer: 0 };
+  let grandTotal = 0;
+  shiftTabs.forEach(t => {
+    (t.payments || []).forEach(p => { salesByMethod[p.method] = (salesByMethod[p.method] || 0) + p.amount; });
+    grandTotal += (t.items || []).reduce((s, i) => s + (typeof i.price === "number" ? i.price : getPrice(i.name, i.format)) * i.qty, 0);
+  });
+
+  const entradas = (shiftState.cashMovements || []).filter(m => m.type === "entrada");
+  const salidas = (shiftState.cashMovements || []).filter(m => m.type === "salida");
+  const totalEntradas = entradas.reduce((s, m) => s + m.amount, 0);
+  const totalSalidas = salidas.reduce((s, m) => s + m.amount, 0);
+  const expectedCash = shiftState.startingCash + salesByMethod.cash + totalEntradas - totalSalidas;
+
+  const tipsByWaiter = {};
+  shiftTabs.forEach(t => {
+    if (t.cardTip) tipsByWaiter[t.waiter] = (tipsByWaiter[t.waiter] || 0) + t.cardTip;
+  });
+
+  function movementLine(m) {
+    const time = new Date(m.at).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+    return `<div class="aline"><span>${m.concept || "(sin concepto)"} <span style="color:var(--text-faint);">— ${time}</span></span><b>${formatMoney(m.amount)}</b></div>`;
+  }
+
+  content.innerHTML = `
+    <div class="category" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">💵 Caja física</div>
+      <div class="aline"><span>Fondo de caja inicial</span><b>${formatMoney(shiftState.startingCash)}</b></div>
+      <div class="aline"><span>+ Ventas en efectivo</span><b>${formatMoney(salesByMethod.cash)}</b></div>
+      <div class="aline"><span>+ Entradas manuales</span><b>${formatMoney(totalEntradas)}</b></div>
+      <div class="aline"><span>− Salidas manuales</span><b>${formatMoney(totalSalidas)}</b></div>
+      <div class="aline" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px; font-weight:800; color:var(--gold-bright);"><span>Efectivo esperado en caja</span><span>${formatMoney(expectedCash)}</span></div>
+    </div>
+
+    <div class="category" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">🧾 Ventas totales</div>
+      <div class="aline"><span>Efectivo</span><b>${formatMoney(salesByMethod.cash)}</b></div>
+      <div class="aline"><span>Tarjeta</span><b>${formatMoney(salesByMethod.card)}</b></div>
+      <div class="aline"><span>Transferencia</span><b>${formatMoney(salesByMethod.transfer)}</b></div>
+      <div class="aline" style="border-top:1px solid var(--line); margin-top:6px; padding-top:8px; font-weight:800; color:var(--gold-bright);"><span>Total del turno</span><span>${formatMoney(grandTotal)}</span></div>
+      <div class="tmeta" style="margin-top:6px;">${shiftTabs.length} cuenta(s) cobrada(s) en este turno</div>
+    </div>
+
+    ${Object.keys(tipsByWaiter).length ? `
+    <div class="category" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">💰 Propina de tarjeta por mesero</div>
+      ${Object.keys(tipsByWaiter).map(w => `<div class="aline"><span>${w}</span><b>${formatMoney(tipsByWaiter[w])}</b></div>`).join("")}
+    </div>` : ""}
+
+    <div class="category" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">📤 Salidas de efectivo (${salidas.length})</div>
+      ${salidas.length ? salidas.map(movementLine).join("") : `<div class="tmeta">Sin salidas registradas.</div>`}
+    </div>
+
+    <div class="category" style="padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">📥 Entradas de efectivo (${entradas.length})</div>
+      ${entradas.length ? entradas.map(movementLine).join("") : `<div class="tmeta">Sin entradas registradas.</div>`}
+    </div>
+
+    <div class="empty-note" style="text-align:left; padding:0 0 20px;">El detalle de inventario consumido todavía no está construido — es la siguiente pieza pendiente del sistema.</div>
+  `;
+}
+
+function renderInventory(app) {
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Inventario y recetas</div>
+      </div>
+      <div class="icon-btn" id="backAdmin">←</div>
+    </div>
+    <div class="content" id="invContent"></div>
+  `;
+  document.getElementById("backAdmin").onclick = () => { session.screen = "admin"; renderApp(); };
+
+  const content = document.getElementById("invContent");
+  const ingredientList = Object.entries(ingredientsState).map(([id, ing]) => ({ id, ...ing }));
+
+  content.innerHTML = `
+    <div class="section-title">Ingredientes (${ingredientList.length})</div>
+    <div id="ingList"></div>
+    <button class="new-tab-btn" id="addIngBtn" style="margin-bottom:24px;">+ Agregar ingrediente</button>
+    <div class="section-title">Recetas por producto</div>
+    <div class="empty-note" style="text-align:left; padding:0 0 14px;">Toca una categoría y luego "Editar receta" en el producto que quieras definir.</div>
+    <div id="recipeCategories"></div>
+  `;
+
+  document.getElementById("addIngBtn").onclick = addIngredient;
+
+  const ingList = document.getElementById("ingList");
+  if (ingredientList.length === 0) {
+    ingList.innerHTML = `<div class="empty-note">Todavía no tienes ingredientes. Agrega el primero abajo.</div>`;
+  }
+  ingredientList.forEach(ing => {
+    const row = document.createElement("div");
+    row.className = "tab-card";
+    row.style.cursor = "default";
+    const low = ing.stock <= 0;
+    const isCup = litroCupIngredientId === ing.id;
+    row.innerHTML = `
+      <div>
+        <div class="tname">${ing.name} ${isCup ? '<span style="color:var(--gold-bright); font-size:11px;">🥤 vaso de litro</span>' : ""}</div>
+        <div class="tmeta" style="${low ? "color:var(--red-bright);" : ""}">${ing.stock} ${ing.unit} en existencia${low ? " — se está acabando" : ""}</div>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 12px;" data-action="cup">${isCup ? "Ya no es el vaso" : "Usar como vaso de litro"}</button>
+        <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 12px;" data-action="restock">+ Stock</button>
+        <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 12px;" data-action="remove">Eliminar</button>
+      </div>
+    `;
+    row.querySelector('[data-action="restock"]').onclick = () => restockIngredient(ing.id, ing.name, ing.unit);
+    row.querySelector('[data-action="remove"]').onclick = () => removeIngredient(ing.id, ing.name);
+    row.querySelector('[data-action="cup"]').onclick = () => setLitroCup(ing.id);
+    ingList.appendChild(row);
+  });
+
+  const recipeCats = document.getElementById("recipeCategories");
+  MENU.forEach(cat => {
+    const catEl = document.createElement("div");
+    catEl.className = "category";
+    const isOpen = session.openCategory === cat.cat;
+    catEl.innerHTML = `
+      <div class="category-head ${isOpen ? "open" : ""}">
+        <span>${cat.cat}</span>
+        <span class="chev">▾</span>
+      </div>
+      <div class="category-body ${isOpen ? "open" : ""}" style="padding: 10px 16px;"></div>
+    `;
+    catEl.querySelector(".category-head").onclick = () => {
+      session.openCategory = isOpen ? null : cat.cat;
+      renderApp();
+    };
+    if (isOpen) {
+      const body = catEl.querySelector(".category-body");
+      const productItems = cat.simple ? cat.items.map(n => ({ n, f: [] })) : cat.items;
+      productItems.forEach(p => {
+        const formats = (p.f && p.f.length) ? p.f : [null];
+        formats.forEach(fmt => {
+          const key = p.n + "|" + (fmt || "simple");
+          const recipeCount = (recipesState[key] || []).length;
+          const row = document.createElement("div");
+          row.className = "tab-card";
+          row.style.cursor = "default";
+          row.innerHTML = `
+            <div>
+              <div class="tname">${p.n}${fmt ? " (" + fmt + ")" : ""}</div>
+              <div class="tmeta">${recipeCount ? recipeCount + " ingrediente(s) en la receta" : "Sin receta definida"}</div>
+            </div>
+            <button class="secondary-btn" style="margin-top:0; width:auto; padding:8px 14px;">Editar receta</button>
+          `;
+          row.querySelector("button").onclick = () => openRecipeEditor(key, p.n + (fmt ? " (" + fmt + ")" : ""));
+          body.appendChild(row);
+        });
+      });
+    }
+    recipeCats.appendChild(catEl);
+  });
+}
+
+function computeAnalytics(fromStr, toStr) {
+  const fromTime = new Date(fromStr + "T00:00:00").getTime();
+  const toTime = new Date(toStr + "T23:59:59.999").getTime();
+  const tabs = tabsState.filter(t => {
+    if (t.status !== "closed" || !t.closedAt) return false;
+    const t2 = new Date(t.closedAt).getTime();
+    return t2 >= fromTime && t2 <= toTime;
+  });
+
+  const byProduct = {};
+  const byWaiter = {};
+  const byHour = Array.from({ length: 24 }, () => 0);
+
+  tabs.forEach(t => {
+    const tabTotal = (t.items || []).reduce((s, i) => s + (typeof i.price === "number" ? i.price : getPrice(i.name, i.format)) * i.qty, 0);
+    const hour = new Date(t.closedAt).getHours();
+    byHour[hour] += tabTotal;
+
+    if (!byWaiter[t.waiter]) byWaiter[t.waiter] = { waiter: t.waiter, tabCount: 0, revenue: 0, tips: 0 };
+    byWaiter[t.waiter].tabCount += 1;
+    byWaiter[t.waiter].revenue += tabTotal;
+    byWaiter[t.waiter].tips += t.cardTip || 0;
+
+    (t.items || []).forEach(it => {
+      const price = typeof it.price === "number" ? it.price : getPrice(it.name, it.format);
+      const key = it.name + (it.format ? " (" + it.format + ")" : "");
+      if (!byProduct[key]) byProduct[key] = { key, qty: 0, revenue: 0 };
+      byProduct[key].qty += it.qty;
+      byProduct[key].revenue += price * it.qty;
+    });
+  });
+
+  const productList = Object.values(byProduct).sort((a, b) => b.qty - a.qty);
+  const waiterList = Object.values(byWaiter).map(w => ({ ...w, avgTicket: w.tabCount ? w.revenue / w.tabCount : 0 })).sort((a, b) => b.revenue - a.revenue);
+  const grandTotal = tabs.reduce((s, t) => s + (t.items || []).reduce((s2, i) => s2 + (typeof i.price === "number" ? i.price : getPrice(i.name, i.format)) * i.qty, 0), 0);
+
+  return { tabCount: tabs.length, grandTotal, productList, waiterList, byHour };
+}
+
+function renderAnalytics(app) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!session.analyticsFrom) session.analyticsFrom = today;
+  if (!session.analyticsTo) session.analyticsTo = today;
+
+  app.innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 class="brand">GALLO</h1>
+        <div class="sub">Analítica</div>
+      </div>
+      <div class="icon-btn" id="backAdmin">←</div>
+    </div>
+    <div class="content" id="analyticsContent"></div>
+  `;
+  document.getElementById("backAdmin").onclick = () => { session.screen = "admin"; renderApp(); };
+
+  const content = document.getElementById("analyticsContent");
+  content.innerHTML = `
+    <div class="category" style="padding:14px; margin-bottom:16px;">
+      <div style="display:flex; gap:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label style="font-size:11px; color:var(--text-faint); display:block; margin-bottom:4px;">Desde</label>
+          <input type="date" id="dateFrom" value="${session.analyticsFrom}" style="width:100%; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:13px;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:11px; color:var(--text-faint); display:block; margin-bottom:4px;">Hasta</label>
+          <input type="date" id="dateTo" value="${session.analyticsTo}" style="width:100%; background:var(--bg-elevated); border:1px solid var(--line); border-radius:8px; color:var(--text); padding:9px; font-size:13px;">
+        </div>
+        <button class="primary-btn" id="applyRange" style="width:auto; padding:9px 16px; margin-top:0;">Ver</button>
+      </div>
+    </div>
+    <div id="analyticsResults"></div>
+  `;
+
+  function refreshResults() {
+    const data = computeAnalytics(session.analyticsFrom, session.analyticsTo);
+    const results = document.getElementById("analyticsResults");
+
+    const maxHour = Math.max(...data.byHour, 1);
+    const hourBars = data.byHour.map((val, h) => `
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div style="width:100%; height:70px; display:flex; align-items:flex-end;">
+          <div style="width:100%; background:${val > 0 ? "var(--gold)" : "var(--line)"}; border-radius:3px 3px 0 0; height:${Math.max((val / maxHour) * 100, 2)}%;" title="${formatMoney(val)}"></div>
+        </div>
+        <div style="font-size:9px; color:var(--text-faint);">${h}</div>
+      </div>
+    `).join("");
+
+    results.innerHTML = `
+      <div class="category" style="padding:14px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:12px; color:var(--text-dim);">${data.tabCount} cuenta(s) cobrada(s) en este periodo</div>
+        <div style="font-size:24px; font-weight:800; color:var(--gold-bright);">${formatMoney(data.grandTotal)}</div>
+      </div>
+
+      <div class="category" style="padding:14px; margin-bottom:16px;">
+        <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">⏰ Ventas por hora</div>
+        <div style="display:flex; gap:3px; align-items:flex-end;">${hourBars}</div>
+      </div>
+
+      <div class="category" style="padding:14px; margin-bottom:16px;">
+        <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">🏆 Productos más vendidos</div>
+        ${data.productList.length === 0 ? `<div class="tmeta">Sin ventas en este periodo.</div>` : data.productList.slice(0, 15).map((p, idx) => `
+          <div class="aline"><span>${idx + 1}. ${p.key}</span><span><b>${p.qty}</b> — ${formatMoney(p.revenue)}</span></div>
+        `).join("")}
+      </div>
+
+      <div class="category" style="padding:14px; margin-bottom:16px;">
+        <div style="font-weight:700; color:var(--gold-bright); margin-bottom:10px;">👤 Desempeño por mesero</div>
+        ${data.waiterList.length === 0 ? `<div class="tmeta">Sin ventas en este periodo.</div>` : data.waiterList.map(w => `
+          <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--line);">
+            <div class="tname" style="margin-bottom:4px;">${w.waiter}</div>
+            <div class="aline"><span>${w.tabCount} cuenta(s) — ticket promedio ${formatMoney(w.avgTicket)}</span><b>${formatMoney(w.revenue)}</b></div>
+            ${w.tips ? `<div class="aline"><span>Propina de tarjeta</span><span>${formatMoney(w.tips)}</span></div>` : ""}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  refreshResults();
+  document.getElementById("applyRange").onclick = () => {
+    session.analyticsFrom = document.getElementById("dateFrom").value;
+    session.analyticsTo = document.getElementById("dateTo").value;
+    refreshResults();
+  };
+}
+
+/* ---------------- INIT ---------------- */
+renderApp(); // primero muestra lo que haya en caché, sin esperar al servidor
+initConnection();
+</script>
+</body>
+</html>
